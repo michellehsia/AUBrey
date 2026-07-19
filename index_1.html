@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>AUBrey — Know Your Flow</title>
+
+<!-- PWA meta tags -->
+<meta name="application-name" content="AUBrey"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="AUBrey"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#3D1020"/>
+<meta name="description" content="Know Your Flow — Uterine Bleeding Assessment Tool"/>
+
+<!-- PWA manifest (inline) -->
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22AUBrey%20%E2%80%94%20Know%20Your%20Flow%22%2C%22short_name%22%3A%22AUBrey%22%2C%22description%22%3A%22Know%20Your%20Flow%20%E2%80%94%20Uterine%20Bleeding%20Assessment%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22orientation%22%3A%22portrait%22%2C%22background_color%22%3A%22%23FDF6F4%22%2C%22theme_color%22%3A%22%233D1020%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxOTIgMTkyIj48cmVjdCB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgcng9IjQ4IiBmaWxsPSIjM0QxMDIwIi8%2BPGVsbGlwc2UgY3g9Ijk2IiBjeT0iMTAwIiByeD0iNDIiIHJ5PSI1NCIgZmlsbD0iIzhCMUEzNCIvPjxlbGxpcHNlIGN4PSI5NiIgY3k9Ijc0IiByeD0iMTgiIHJ5PSIxMyIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjMpIi8%2BPHRleHQgeD0iOTYiIHk9IjE2OCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSIjRDQ4ODlBIj5BVUIgcmV5PC90ZXh0Pjwvc3ZnPg%3D%3D%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%2C%22purpose%22%3A%22any%20maskable%22%7D%5D%7D"/>
+
+<!-- Apple touch icon (inline SVG → PNG via canvas) -->
+<link rel="apple-touch-icon" id="appleTouchIcon"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  /* Berry red + cream palette */
+  --g-dark:    #3D1020;
+  --g-mid:     #8B1A34;
+  --g-light:   #B03050;
+  --g-sage:    #D4889A;
+  --g-pale:    #FDE8EE;
+  --g-off:     #FDF6F4;
+  --warm:      #F5EEE8;
+  --border:    #E8D0D8;
+  --charcoal:  #3D2028;
+  --muted:     #A07880;
+  --white:     #FFFFFF;
+  --text:      #3D2028;
+  --sev-low-bg:  #EBF5EC; --sev-low-br:  #2D7A3A; --sev-low-tx:  #2D7A3A;
+  --sev-mod-bg:  #FEF4E6; --sev-mod-br:  #B87020; --sev-mod-tx:  #B87020;
+  --sev-urg-bg:  #FDECEA; --sev-urg-br:  #B03020; --sev-urg-tx:  #B03020;
+  --r: 14px; --r-sm: 10px;
+  --shadow: 0 2px 16px rgba(61,16,32,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{font-family:'DM Sans',sans-serif;background:var(--warm);color:var(--text);min-height:100vh;}
+
+/* ── Shell ── */
+.app-shell{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--white);box-shadow:0 0 40px rgba(0,0,0,.08);}
+.admin-shell{max-width:960px;margin:0 auto;padding:1.5rem;}
+
+/* ── Topbar ── */
+.topbar{background:var(--g-dark);padding:13px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0;position:sticky;top:0;z-index:30;}
+.topbar-logo{font-family:'DM Serif Display',serif;font-size:1.25rem;color:#fff;}
+.topbar-logo em{color:var(--g-sage);font-style:italic;}
+.topbar-sub{font-size:.62rem;color:rgba(255,255,255,.4);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px;}
+.topbar-right{margin-left:auto;}
+.admin-link{font-size:.72rem;color:rgba(255,255,255,.4);cursor:pointer;text-decoration:underline;border:none;background:none;font-family:'DM Sans',sans-serif;}
+
+/* ── Progress ── */
+.prog-wrap{padding:11px 18px 0;background:var(--g-off);flex-shrink:0;}
+.prog-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--g-light);border-radius:2px;transition:width .4s ease;}
+.prog-label{font-size:.68rem;color:var(--muted);margin-top:5px;padding-bottom:10px;}
+
+/* ── Scrollable body ── */
+.q-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:18px 18px 8px;background:var(--g-off);}
+.q-scroll::-webkit-scrollbar{width:3px;}
+.q-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+.q-eyebrow{font-size:.7rem;color:var(--g-mid);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:4px;}
+.q-headline{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--g-dark);line-height:1.3;margin-bottom:5px;}
+.q-hint{font-size:.83rem;color:var(--muted);line-height:1.55;margin-bottom:12px;}
+
+/* ── Option cards ── */
+.opt-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:7px;cursor:pointer;display:flex;align-items:center;gap:9px;transition:border-color .15s,background .15s;user-select:none;-webkit-user-select:none;}
+.opt-card.sel{border-color:var(--g-mid);background:var(--g-pale);}
+.opt-card:active{transform:scale(.99);}
+.opt-icon{width:32px;height:32px;border-radius:9px;background:var(--g-off);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;pointer-events:none;}
+.opt-card.sel .opt-icon{background:var(--g-pale);}
+.opt-text{flex:1;pointer-events:none;}
+.opt-title{font-size:.9rem;font-weight:500;color:var(--g-dark);margin-bottom:1px;}
+.opt-desc{font-size:.78rem;color:var(--muted);line-height:1.35;}
+.radio-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.opt-card.sel .radio-dot{border-color:var(--g-mid);background:var(--g-mid);}
+.radio-inner{width:6px;height:6px;border-radius:50%;background:#fff;display:none;}
+.opt-card.sel .radio-inner{display:block;}
+.check-box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.opt-card.multi.sel .check-box{border-color:var(--g-mid);background:var(--g-mid);}
+.check-mark{font-size:9px;color:#fff;display:none;pointer-events:none;}
+.opt-card.multi.sel .check-mark{display:block;}
+
+/* ── Warning banner ── */
+.warn-banner{background:#FEF4E6;border:1.5px solid #B87020;border-radius:var(--r);padding:12px 14px;margin-bottom:12px;font-size:.83rem;color:#7A4A10;line-height:1.55;}
+.warn-banner strong{display:block;color:#B87020;margin-bottom:3px;font-size:.88rem;}
+.alert-banner{background:var(--sev-urg-bg);border:1.5px solid var(--sev-urg-br);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;font-size:.85rem;color:#6A1A10;line-height:1.6;}
+.alert-banner strong{display:block;color:var(--sev-urg-tx);font-size:.95rem;margin-bottom:4px;}
+
+/* ── Divider ── */
+hr.div{border:none;border-top:1px solid var(--border);margin:12px 0;}
+.section-sub{font-size:.78rem;font-weight:600;color:var(--g-dark);margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
+.section-sub::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── Footer ── */
+.q-footer{background:var(--white);border-top:1px solid var(--border);padding:10px 18px 16px;flex-shrink:0;}
+.footer-row{display:flex;gap:8px;}
+.btn-back{background:none;border:1.5px solid var(--border);border-radius:24px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--muted);cursor:pointer;padding:10px 18px;flex-shrink:0;}
+.btn-next{flex:1;background:var(--g-mid);color:#fff;border-radius:24px;padding:12px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;text-align:center;cursor:pointer;border:none;transition:background .2s;}
+.btn-next:hover{background:var(--g-dark);}
+.btn-full{width:100%;background:var(--g-mid);color:#fff;border-radius:24px;padding:13px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;border:none;cursor:pointer;margin-bottom:8px;transition:background .2s;}
+.btn-full:hover{background:var(--g-dark);}
+.btn-outline{width:100%;background:none;border:1.5px solid var(--border);border-radius:24px;padding:12px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--muted);cursor:pointer;}
+.btn-ghost-sm{background:none;border:none;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--muted);cursor:pointer;text-decoration:underline;padding:4px;width:100%;text-align:center;}
+
+/* ── Splash ── */
+.splash{flex:1;background:linear-gradient(160deg,#FDF6F4 0%,#FDE8EE 100%);display:flex;flex-direction:column;align-items:center;padding:0 24px 32px;overflow-y:auto;}
+.splash-top{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px 0;}
+.drop{width:56px;height:72px;background:var(--g-mid);border-radius:50% 50% 50% 50%/38% 38% 62% 62%;display:flex;align-items:flex-start;justify-content:center;padding-top:13px;margin-bottom:14px;box-shadow:0 8px 28px rgba(139,26,52,.3);}
+.drop-inner{width:18px;height:12px;background:rgba(255,255,255,.35);border-radius:50%;}
+.splash-wm{font-family:'DM Serif Display',serif;font-size:2.4rem;color:var(--g-dark);letter-spacing:-.5px;margin-bottom:4px;}
+.splash-wm em{color:var(--g-sage);font-style:italic;}
+.splash-tag{font-size:.72rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;}
+.feat-grid{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:24px;}
+.feat-item{background:rgba(255,255,255,.06);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,.09);text-align:left;}
+.feat-icon{font-size:1.1rem;margin-bottom:5px;}
+.feat-title{font-size:.78rem;font-weight:500;color:rgba(255,255,255,.85);margin-bottom:2px;}
+.feat-desc{font-size:.7rem;color:rgba(255,255,255,.38);line-height:1.4;}
+.btn-splash{width:100%;background:var(--g-mid);color:#fff;border-radius:28px;padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:500;border:none;cursor:pointer;margin-bottom:10px;transition:background .2s;}
+.btn-splash:hover{background:var(--g-light);}
+.splash-note{font-size:.72rem;color:var(--muted);}
+
+/* ── Study ID ── */
+.id-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 18px;text-align:center;flex:1;}
+.id-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--g-dark);margin-bottom:8px;}
+.id-sub{font-size:.85rem;color:var(--muted);margin-bottom:24px;line-height:1.55;}
+.id-input{width:100%;padding:14px 18px;border:2px solid var(--border);border-radius:var(--r);font-family:'DM Serif Display',serif;font-size:2rem;color:var(--g-dark);letter-spacing:8px;text-align:center;text-transform:uppercase;background:var(--g-off);outline:none;margin-bottom:8px;}
+.id-input:focus{border-color:var(--g-mid);}
+.id-error{font-size:.78rem;color:var(--sev-urg-tx);min-height:18px;margin-bottom:6px;}
+.id-info{font-size:.74rem;color:var(--muted);line-height:1.5;padding:10px 14px;background:var(--warm);border-radius:var(--r-sm);margin-top:10px;text-align:left;}
+
+/* ── Biometric ── */
+.biometric-btn{width:100%;background:var(--g-dark);color:#fff;border-radius:28px;padding:14px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;border:none;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px;}
+.biometric-divider{display:flex;align-items:center;gap:10px;margin:12px 0;width:100%;}
+.biometric-divider span{font-size:.72rem;color:var(--muted);white-space:nowrap;}
+.biometric-divider::before,.biometric-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.biometric-status{font-size:.75rem;color:var(--muted);text-align:center;padding:5px 0;min-height:20px;}
+.biometric-status.success{color:var(--sev-low-tx);}
+.biometric-status.error{color:var(--sev-urg-tx);}
+
+/* ── Returning user ── */
+.session-stats{background:rgba(255,255,255,.08);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:12px;width:100%;}
+.session-stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.session-stat-row:last-child{margin-bottom:0;}
+.session-stat-label{font-size:.76rem;color:rgba(255,255,255,.45);}
+.session-stat-val{font-size:.83rem;color:#fff;font-weight:500;}
+.return-screen{flex:1;background:var(--g-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;text-align:center;}
+.return-title{font-family:'DM Serif Display',serif;font-size:1.5rem;color:#fff;margin-bottom:8px;}
+.return-sub{font-size:.85rem;color:rgba(255,255,255,.5);margin-bottom:20px;line-height:1.55;}
+.btn-return-primary{width:100%;background:var(--g-mid);color:#fff;border-radius:28px;padding:14px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;border:none;cursor:pointer;margin-bottom:10px;}
+.btn-return-outline{width:100%;background:transparent;border:1.5px solid rgba(255,255,255,.22);color:rgba(255,255,255,.75);border-radius:28px;padding:13px;font-family:'DM Sans',sans-serif;font-size:.9rem;cursor:pointer;margin-bottom:10px;}
+
+/* ── Context flag badge ── */
+.context-badge{display:inline-flex;align-items:center;gap:6px;background:var(--g-pale);border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-size:.74rem;color:var(--g-dark);font-weight:500;margin-bottom:12px;}
+
+/* ── Hybrid visual pad scorer ── */
+.pad-scorer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.pad-option{border:2px solid var(--border);border-radius:14px;padding:10px 8px 8px;cursor:pointer;text-align:center;background:var(--white);transition:border-color .15s,background .15s,transform .1s;position:relative;user-select:none;-webkit-user-select:none;}
+.pad-option:active{transform:scale(.97);}
+.pad-option.sel{border-color:var(--g-mid);background:var(--g-pale);}
+.pad-check{position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;background:var(--g-mid);display:none;align-items:center;justify-content:center;}
+.pad-option.sel .pad-check{display:flex;}
+.pad-check-inner{color:#fff;font-size:10px;font-weight:700;}
+.pad-opt-name{font-size:.72rem;font-weight:600;color:var(--g-dark);margin-top:6px;line-height:1.3;}
+.pad-opt-desc{font-size:.63rem;color:var(--muted);margin-top:2px;line-height:1.3;}
+.pad-option-overflow{border:2px solid var(--border);border-radius:14px;padding:10px 14px;cursor:pointer;background:var(--white);transition:border-color .15s,background .15s;display:flex;align-items:center;gap:12px;margin-bottom:10px;position:relative;user-select:none;}
+.pad-option-overflow.sel{border-color:var(--sev-urg-br);background:var(--sev-urg-bg);}
+.pad-option-overflow .pad-check{position:absolute;top:8px;right:10px;width:18px;height:18px;border-radius:50%;background:var(--sev-urg-br);display:none;align-items:center;justify-content:center;}
+.pad-option-overflow.sel .pad-check{display:flex;}
+.overflow-text .pad-opt-name{font-size:.78rem;font-weight:600;color:var(--charcoal);}
+.overflow-text .pad-opt-desc{font-size:.68rem;color:var(--muted);margin-top:2px;}
+.pad-option-overflow.sel .overflow-text .pad-opt-name{color:var(--sev-urg-tx);}
+.pad-tap-chip{display:inline-flex;align-items:center;gap:5px;background:var(--g-off);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:.65rem;color:var(--muted);margin-top:4px;}
+.pad-score-chip{display:flex;justify-content:space-between;align-items:center;padding:9px 13px;background:var(--g-off);border-radius:var(--r-sm);border:1px solid var(--border);}
+.pad-score-label{font-size:.78rem;color:var(--muted);}
+.pad-score-val{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--g-mid);}
+.pad-score-desc{font-size:.72rem;color:var(--g-mid);font-weight:500;}
+
+/* ── Results ── */
+.result-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 18px;background:var(--g-off);}
+.result-scroll::-webkit-scrollbar{width:3px;}
+.result-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.sev-card{border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px;border-left:4px solid;border-radius:0 var(--r) var(--r) 0;}
+.sev-low{background:var(--sev-low-bg);border-color:var(--sev-low-br);}
+.sev-mod{background:var(--sev-mod-bg);border-color:var(--sev-mod-br);}
+.sev-urg{background:var(--sev-urg-bg);border-color:var(--sev-urg-br);}
+.sev-icon{font-size:1.5rem;flex-shrink:0;}
+.sev-title{font-weight:600;font-size:.95rem;margin-bottom:3px;}
+.sev-low .sev-title{color:var(--sev-low-tx);}
+.sev-mod .sev-title{color:var(--sev-mod-tx);}
+.sev-urg .sev-title{color:var(--sev-urg-tx);}
+.sev-desc{font-size:.82rem;color:var(--charcoal);line-height:1.55;}
+.res-section{font-size:.68rem;color:var(--g-mid);letter-spacing:1.5px;text-transform:uppercase;font-weight:600;margin-bottom:7px;margin-top:14px;}
+.badge-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
+.badge{padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:600;border:1.5px solid;}
+.b-struct{background:#EFF4FE;border-color:#6E9EF5;color:#2A4FAD;}
+.b-non{background:#FEF0F4;border-color:#D4889A;color:#6B1530;}
+.b-flag{background:var(--sev-urg-bg);border-color:#E87070;color:#8B1A1A;}
+.b-iatrogen{background:#FEF9E6;border-color:#C9A020;color:#7A5A00;}
+.rec-item{display:flex;gap:9px;padding:9px 11px;border-radius:var(--r-sm);background:var(--white);border:1px solid var(--border);margin-bottom:6px;}
+.rec-icon{font-size:1rem;flex-shrink:0;}
+.rec-text{font-size:.82rem;color:var(--text);line-height:1.55;}
+.study-id-badge{background:var(--g-dark);color:#fff;border-radius:var(--r-sm);padding:8px 12px;margin-bottom:14px;font-size:.8rem;display:flex;align-items:center;gap:8px;}
+.study-id-badge strong{font-family:'DM Serif Display',serif;font-size:.95rem;color:var(--g-sage);letter-spacing:2px;}
+.context-summary{background:var(--white);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 13px;margin-bottom:14px;font-size:.8rem;color:var(--charcoal);line-height:1.6;}
+.context-summary strong{color:var(--g-dark);}
+.disclaimer{background:var(--warm);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 13px;font-size:.74rem;color:var(--muted);line-height:1.6;margin-top:12px;}
+.disclaimer strong{display:block;margin-bottom:3px;color:var(--charcoal);}
+.submit-confirm{background:var(--g-pale);border:1.5px solid var(--border);border-radius:var(--r);padding:11px 14px;margin-bottom:14px;font-size:.83rem;color:var(--g-dark);line-height:1.6;}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--g-dark);color:#fff;padding:10px 18px;border-radius:24px;font-size:.82rem;font-family:'DM Sans',sans-serif;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:280px;text-align:center;transition:opacity .5s;}
+
+/* ══ ADMIN ══════════════════════════════════════ */
+.admin-login{max-width:400px;margin:4rem auto;background:var(--white);border-radius:20px;padding:2.5rem;box-shadow:var(--shadow);}
+.admin-login h2{font-family:'DM Serif Display',serif;color:var(--g-dark);font-size:1.6rem;margin-bottom:6px;}
+.admin-login h2 em{color:var(--g-light);font-style:italic;}
+.admin-login p{font-size:.85rem;color:var(--muted);margin-bottom:24px;}
+.field{margin-bottom:14px;}
+.field label{font-size:.8rem;font-weight:500;color:var(--g-dark);display:block;margin-bottom:5px;}
+.field input{width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);outline:none;}
+.field input:focus{border-color:var(--g-mid);}
+.login-err{font-size:.78rem;color:var(--sev-urg-tx);min-height:18px;margin-bottom:8px;}
+.admin-header{background:var(--g-dark);color:#fff;border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.admin-header h1{font-family:'DM Serif Display',serif;font-size:1.5rem;}
+.admin-header h1 em{color:var(--g-sage);font-style:italic;}
+.admin-header p{font-size:.78rem;color:rgba(255,255,255,.45);margin-top:2px;}
+.btn-logout{background:rgba(255,255,255,.14);border:none;color:#fff;border-radius:20px;padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:.8rem;cursor:pointer;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--white);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow);}
+.stat-num{font-family:'DM Serif Display',serif;font-size:2rem;color:var(--g-mid);}
+.stat-num.warn{color:#B87020;}
+.stat-num.urg{color:#B03020;}
+.stat-label{font-size:.73rem;color:var(--muted);margin-top:2px;}
+.admin-controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:160px;padding:9px 14px;border:1.5px solid var(--border);border-radius:24px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;}
+.search-input:focus{border-color:var(--g-mid);}
+.filter-sel{padding:9px 14px;border:1.5px solid var(--border);border-radius:24px;font-family:'DM Sans',sans-serif;font-size:.85rem;outline:none;background:var(--white);cursor:pointer;}
+.btn-export{background:var(--g-dark);color:#fff;border:none;border-radius:24px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:.85rem;cursor:pointer;}
+.submissions-table{background:var(--white);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+.t-head{display:grid;grid-template-columns:90px 110px 110px 75px 70px 1fr 70px;background:var(--g-dark);}
+.t-row{display:grid;grid-template-columns:90px 110px 110px 75px 70px 1fr 70px;border-bottom:1px solid var(--g-off);cursor:pointer;transition:background .15s;}
+.t-row:hover{background:var(--g-off);}
+.t-row:last-child{border-bottom:none;}
+.th{padding:10px 12px;font-size:.7rem;color:rgba(255,255,255,.65);font-weight:600;letter-spacing:.8px;text-transform:uppercase;}
+.td{padding:11px 12px;font-size:.82rem;color:var(--text);display:flex;align-items:center;}
+.td-id{font-family:'DM Serif Display',serif;font-size:.95rem;color:var(--g-dark);letter-spacing:1px;}
+.sev-badge{padding:3px 9px;border-radius:999px;font-size:.7rem;font-weight:600;}
+.sb-low{background:var(--sev-low-bg);color:var(--sev-low-tx);}
+.sb-mod{background:var(--sev-mod-bg);color:var(--sev-mod-tx);}
+.sb-urg{background:var(--sev-urg-bg);color:var(--sev-urg-tx);}
+.btn-view{background:var(--g-off);border:1px solid var(--border);color:var(--g-mid);border-radius:20px;padding:4px 12px;font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--muted);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--white);border-radius:20px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;padding:24px;position:relative;}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--g-off);border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;color:var(--muted);}
+.modal h2{font-family:'DM Serif Display',serif;color:var(--g-dark);font-size:1.3rem;margin-bottom:4px;}
+.modal-meta{font-size:.76rem;color:var(--muted);margin-bottom:16px;}
+.detail-section{margin-bottom:14px;}
+.detail-label{font-size:.68rem;color:var(--g-mid);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;margin-bottom:5px;}
+.detail-val{font-size:.86rem;color:var(--text);line-height:1.6;}
+.detail-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{background:var(--g-off);border:1px solid var(--border);border-radius:999px;padding:3px 10px;font-size:.76rem;color:var(--text);}
+.data-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+.data-item{background:var(--warm);border-radius:8px;padding:7px 10px;}
+.data-key{font-size:.68rem;color:var(--muted);font-family:monospace;margin-bottom:1px;}
+.data-val{font-size:.8rem;color:var(--charcoal);font-weight:500;}
+.hidden{display:none!important;}
+
+@media(max-width:640px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .t-head,.t-row{grid-template-columns:80px 95px 95px 60px 1fr 60px;}
+  .th:nth-child(4),.td:nth-child(4){display:none;}
+  .admin-shell{padding:1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     PATIENT APP
+══════════════════════════════════════ -->
+<div id="patientApp">
+<div class="app-shell" id="appShell">
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo"><em>AUB</em>rey</div>
+      <div class="topbar-sub">Know Your Flow</div>
+    </div>
+    <div class="topbar-right"><button class="admin-link" onclick="showAdmin()">Admin ↗</button></div>
+  </div>
+  <div class="prog-wrap hidden" id="progWrap">
+    <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+    <div class="prog-label" id="progLabel"></div>
+  </div>
+
+  <!-- S0: Splash -->
+  <div id="sc0" style="display:flex;flex-direction:column;flex:1;">
+    <div class="splash">
+      <div class="splash-top">
+        <div class="drop"><div class="drop-inner"></div></div>
+        <div class="splash-wm"><em>AUB</em>rey</div>
+        <div class="splash-tag">Know Your Flow</div>
+        <button class="btn-splash" onclick="goTo('id')" style="margin-top:8px;">Begin assessment</button>
+        <div class="splash-note">3–5 minutes · No personal information collected</div>
+        <div id="iosInstallHint" class="hidden" style="margin-top:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:rgba(255,255,255,.65);text-align:center;line-height:1.6;max-width:260px;">
+          📲 <strong style="color:#D4889A;">Add to Home Screen</strong><br/>
+          Tap <strong>Share ↑</strong> then <strong>"Add to Home Screen"</strong> to install AUBrey as an app
+          <button onclick="document.getElementById('iosInstallHint').classList.add('hidden')" style="display:block;margin:8px auto 0;background:none;border:none;color:rgba(255,255,255,.4);font-family:'DM Sans',sans-serif;font-size:.7rem;cursor:pointer;">Dismiss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S-id: Study ID + Biometric -->
+  <div id="sc_id" class="hidden" style="display:none;flex-direction:column;flex:1;background:var(--g-off);">
+    <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;">
+      <div class="id-screen">
+        <div id="bioSection" class="hidden" style="width:100%;text-align:center;margin-bottom:4px;">
+          <div style="font-size:2.5rem;margin-bottom:10px;">🔐</div>
+          <div class="id-title" id="bioTitle">Welcome back</div>
+          <div class="id-sub" id="bioSub">Use Face ID or biometrics to sign in instantly.</div>
+          <button class="biometric-btn" id="bioBtn" onclick="authenticateBiometric()">
+            <span style="font-size:1.3rem;">🪪</span> Sign in with Face ID / Biometric
+          </button>
+          <div class="biometric-status" id="bioStatus"></div>
+          <div class="biometric-divider"><span>or enter your password</span></div>
+        </div>
+        <div id="codeSection" style="width:100%;">
+          <div id="codeIcon" style="font-size:2.5rem;margin-bottom:14px;text-align:center;">🔑</div>
+          <div class="id-title" id="codeTitle">Enter your password</div>
+          <div id="codeSub" class="id-sub">You were given a password at check-in. Enter it below to begin. (1 letter + 3 numbers, e.g. B247)</div>
+          <input class="id-input" id="studyIdInput" maxlength="4" placeholder="A000" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="margin-top:16px;"/>
+          <div class="id-error" id="idError"></div>
+          <div class="id-info">🔒 Your name, date of birth, and medical record number are <strong>never</strong> entered — only your password is used to identify your responses.</div>
+        </div>
+      </div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo(0)">← Back</button><button class="btn-next" onclick="validateId()">Continue</button></div></div>
+  </div>
+
+  <!-- S-return: Returning user -->
+  <div id="sc_return" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="return-screen">
+      <div style="font-size:2.5rem;margin-bottom:14px;">👋</div>
+      <div class="return-title">Welcome back</div>
+      <div class="return-sub" id="returnSub"></div>
+      <div class="session-stats" id="sessionStats"></div>
+      <button class="btn-return-primary" onclick="startNewAssessment()">Start a new assessment</button>
+      <button class="btn-return-outline" onclick="viewLastResults()">View my last results</button>
+      <button class="btn-ghost-sm" style="color:rgba(255,255,255,.35);margin-top:4px;" onclick="goTo('id')">Use a different password</button>
+    </div>
+  </div>
+
+  <!-- S-lastresults: Previous results view -->
+  <div id="sc_lastresults" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="result-scroll" id="lastResultsBody"></div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('return')">← Back</button><button class="btn-next" onclick="startNewAssessment()">New assessment</button></div></div>
+  </div>
+
+  <!-- S-pregnant: Pregnancy warning -->
+  <div id="sc_pregnant" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll" style="display:flex;flex-direction:column;justify-content:center;">
+      <div style="padding:8px 0;">
+        <div style="font-size:2.5rem;text-align:center;margin-bottom:16px;">⚠️</div>
+        <div class="alert-banner">
+          <strong>Bleeding during pregnancy requires immediate attention</strong>
+          Any vaginal bleeding during pregnancy should be evaluated promptly by a healthcare provider or in an emergency setting. This tool is not designed for assessment of bleeding during active pregnancy.
+        </div>
+        <div style="font-size:.9rem;color:var(--charcoal);line-height:1.7;margin-bottom:20px;">
+          If you are experiencing heavy bleeding, severe cramping, dizziness, or passed tissue — <strong>please go to the emergency room or call 911 immediately.</strong>
+          <br/><br/>
+          If your bleeding is light and you would still like to complete this assessment for research documentation purposes, you may continue. Your care team will be notified of your response.
+        </div>
+        <button class="btn-full" onclick="continueFromPregnancy()">I understand — continue the assessment</button>
+        <button class="btn-outline" onclick="startOver()">Exit assessment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- S-context: Visit context -->
+  <div id="sc_context" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">About this visit</div>
+      <div class="q-headline">What brings you in today?</div>
+      <div class="q-hint">Select the option that best describes your situation. This helps us ask the most relevant questions.</div>
+      <div class="opt-card" data-group="ctx" data-val="general"><div class="opt-icon">🩺</div><div class="opt-text"><div class="opt-title">General bleeding concern</div><div class="opt-desc">Not related to a recent procedure or event</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="abortion_medical"><div class="opt-icon">💊</div><div class="opt-text"><div class="opt-title">After a medical abortion</div><div class="opt-desc">Mifepristone, misoprostol (abortion pill)</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="abortion_procedural"><div class="opt-icon">🏥</div><div class="opt-text"><div class="opt-title">After a procedural abortion</div><div class="opt-desc">MVA, D&E, or aspiration procedure</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="postpartum"><div class="opt-icon">🌱</div><div class="opt-text"><div class="opt-title">After delivery / postpartum</div><div class="opt-desc">Within the past 12 weeks of giving birth</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="post_procedure"><div class="opt-icon">🔬</div><div class="opt-text"><div class="opt-title">After a gynecologic procedure</div><div class="opt-desc">IUD insertion, biopsy, hysteroscopy, D&C, or other</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="new_medication"><div class="opt-icon">💉</div><div class="opt-text"><div class="opt-title">After starting a new medication or hormone</div><div class="opt-desc">Birth control, HRT, or other hormone therapy</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="ctx" data-val="pregnant"><div class="opt-icon">🤰</div><div class="opt-text"><div class="opt-title">Currently pregnant or possibly pregnant</div><div class="opt-desc">Active or suspected pregnancy</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('id')">← Back</button><button class="btn-next" onclick="handleContextNext()">Continue</button></div></div>
+  </div>
+
+  <!-- S-ctx-detail: Context follow-up (dynamic) -->
+  <div id="sc_ctx_detail" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll" id="ctxDetailBody"></div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('context')">← Back</button><button class="btn-next" onclick="goToContraception()">Continue</button></div></div>
+  </div>
+
+  <!-- S-contraception: Contraception & medications -->
+  <div id="sc_contraception" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Contraception & medications</div>
+      <div class="q-headline">Are you using any of the following?</div>
+      <div class="q-hint">Select all that apply. This helps identify possible causes of your bleeding.</div>
+      <div class="opt-card multi" data-group="contracept" data-val="hormonal_iud"><div class="opt-icon">🔵</div><div class="opt-text"><div class="opt-title">Hormonal IUD</div><div class="opt-desc">Mirena, Liletta, Kyleena, Skyla</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="copper_iud"><div class="opt-icon">🟤</div><div class="opt-text"><div class="opt-title">Copper IUD</div><div class="opt-desc">Paragard</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="pill_combined"><div class="opt-icon">💊</div><div class="opt-text"><div class="opt-title">Combined pill or patch</div><div class="opt-desc">Estrogen + progestin (e.g. Lo Loestrin, Ortho Tri-Cyclen, Xulane patch)</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="pill_pop"><div class="opt-icon">🟡</div><div class="opt-text"><div class="opt-title">Progestin-only pill (mini-pill)</div><div class="opt-desc">Norethindrone, Slynd</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="implant"><div class="opt-icon">📍</div><div class="opt-text"><div class="opt-title">Implant</div><div class="opt-desc">Nexplanon</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="injectable"><div class="opt-icon">💉</div><div class="opt-text"><div class="opt-title">Injectable</div><div class="opt-desc">Depo-Provera (medroxyprogesterone)</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <hr class="div"/>
+      <div class="section-sub">Blood thinners / anticoagulants</div>
+      <div class="opt-card multi" data-group="contracept" data-val="anticoag_warfarin"><div class="opt-icon">🔴</div><div class="opt-text"><div class="opt-title">Warfarin (Coumadin)</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="anticoag_doac"><div class="opt-icon">🔴</div><div class="opt-text"><div class="opt-title">DOAC</div><div class="opt-desc">Rivaroxaban (Xarelto), apixaban (Eliquis), dabigatran (Pradaxa)</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="anticoag_heparin"><div class="opt-icon">🔴</div><div class="opt-text"><div class="opt-title">Heparin or LMWH</div><div class="opt-desc">Lovenox, enoxaparin</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="contracept" data-val="anticoag_aspirin"><div class="opt-icon">🟠</div><div class="opt-text"><div class="opt-title">Daily aspirin</div><div class="opt-desc">81mg or 325mg prescribed for cardiac or other use</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <hr class="div"/>
+      <div class="opt-card multi" data-group="contracept" data-val="none"><div class="opt-icon">⭕</div><div class="opt-text"><div class="opt-title">None of the above</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="backFromContraception()">← Back</button><button class="btn-next" onclick="goToReproStatus()">Continue</button></div></div>
+  </div>
+
+  <!-- S-repro: Reproductive status (skipped for abortion/postpartum) -->
+  <div id="sc_repro" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Your cycle</div>
+      <div class="q-headline">Do you still get your period?</div>
+      <div class="q-hint">Pick whichever feels most like your situation right now.</div>
+      <div class="opt-card sel" data-group="repro" data-val="active"><div class="opt-icon">🗓️</div><div class="opt-text"><div class="opt-title">Yes, I still have periods</div><div class="opt-desc">Regular or irregular — I still bleed monthly</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="repro" data-val="irregular"><div class="opt-icon">🌙</div><div class="opt-text"><div class="opt-title">My periods are becoming irregular</div><div class="opt-desc">Unpredictable or getting further apart</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="repro" data-val="stopped"><div class="opt-icon">✨</div><div class="opt-text"><div class="opt-title">I no longer have periods</div><div class="opt-desc">My period has stopped or it's been a while</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('contraception')">← Back</button><button class="btn-next" onclick="goTo('menopause')">Continue</button></div></div>
+  </div>
+
+  <!-- S-menopause: Menopause confirmation -->
+  <div id="sc_menopause" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">A little more detail</div>
+      <div class="q-headline">Has a doctor told you you're menopausal?</div>
+      <div class="q-hint">Or has it been 12 months or more since your last period?</div>
+      <div class="opt-card sel" data-group="meno" data-val="confirmed"><div class="opt-icon">✅</div><div class="opt-text"><div class="opt-title">Yes — confirmed, or 12+ months</div><div class="opt-desc">A doctor told me, or my last period was over a year ago</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="meno" data-val="unsure"><div class="opt-icon">❓</div><div class="opt-text"><div class="opt-title">Not sure</div><div class="opt-desc">My periods stopped but I haven't been told officially</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="meno" data-val="no"><div class="opt-icon">❌</div><div class="opt-text"><div class="opt-title">No — less than 12 months or still getting them</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('repro')">← Back</button><button class="btn-next" onclick="goTo('age')">Continue</button></div></div>
+  </div>
+
+  <!-- S-age -->
+  <div id="sc_age" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Last profile question</div>
+      <div class="q-headline">How old are you?</div>
+      <div class="q-hint">Age helps identify risk factors specific to your stage of life.</div>
+      <div class="opt-card sel" data-group="age" data-val="u25"><div class="opt-icon">🌱</div><div class="opt-text"><div class="opt-title">Under 25</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="age" data-val="25-39"><div class="opt-icon">🌿</div><div class="opt-text"><div class="opt-title">25 – 39</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="age" data-val="40-54"><div class="opt-icon">🍃</div><div class="opt-text"><div class="opt-title">40 – 54</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="age" data-val="55plus"><div class="opt-icon">☘️</div><div class="opt-text"><div class="opt-title">55 or older</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="backFromAge()">← Back</button><button class="btn-next" onclick="goTo('bleedtype')">Continue</button></div></div>
+  </div>
+
+  <!-- S-bleedtype: Bleeding pattern -->
+  <div id="sc_bleedtype" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Bleeding pattern</div>
+      <div class="q-headline">What's been going on with your bleeding?</div>
+      <div class="q-hint">Select all that apply — it's okay to pick more than one.</div>
+      <div id="contextBadge"></div>
+      <div class="opt-card multi" data-group="bleed" data-val="HMB"><div class="opt-icon">📅</div><div class="opt-text"><div class="opt-title">Heavy bleeding</div><div class="opt-desc">Soaking through protection frequently, or lasting longer than expected</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="bleed" data-val="IMB"><div class="opt-icon">🔴</div><div class="opt-text"><div class="opt-title">Bleeding between periods</div><div class="opt-desc">Spotting or bleeding at unexpected times</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="bleed" data-val="PCB"><div class="opt-icon">⚠️</div><div class="opt-text"><div class="opt-title">Bleeding after sex</div><div class="opt-desc">Any bleeding after intercourse</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="bleed" data-val="PMB"><div class="opt-icon">🚨</div><div class="opt-text"><div class="opt-title">Bleeding after menopause</div><div class="opt-desc">Any bleeding 12+ months after last period</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="bleed" data-val="IRR"><div class="opt-icon">🔄</div><div class="opt-text"><div class="opt-title">Irregular or unpredictable</div><div class="opt-desc">No real pattern to when bleeding happens</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="bleed" data-val="prolonged"><div class="opt-icon">⏳</div><div class="opt-text"><div class="opt-title">Prolonged bleeding</div><div class="opt-desc">Bleeding that continues longer than expected</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('age')">← Back</button><button class="btn-next" onclick="goTo('duration')">Continue</button></div></div>
+  </div>
+
+  <!-- S-duration -->
+  <div id="sc_duration" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Duration</div>
+      <div class="q-headline">How long has this been happening?</div>
+      <div class="q-hint">Think about when you first noticed something felt off.</div>
+      <div class="opt-card sel" data-group="dur" data-val="acute"><div class="opt-icon">📅</div><div class="opt-text"><div class="opt-title">Less than 3 months</div><div class="opt-desc">This is new or started recently</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="dur" data-val="3-6m"><div class="opt-icon">🕐</div><div class="opt-text"><div class="opt-title">3 – 6 months</div><div class="opt-desc">It's been going on for a little while</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="dur" data-val="chronic"><div class="opt-icon">🕑</div><div class="opt-text"><div class="opt-title">6 months or longer</div><div class="opt-desc">This has been an ongoing issue</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('bleedtype')">← Back</button><button class="btn-next" onclick="goTo('volume')">Continue</button></div></div>
+  </div>
+
+  <!-- S-volume: Hybrid visual pad scorer -->
+  <div id="sc_volume" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Bleeding volume</div>
+      <div class="q-headline">Which pad best matches your heaviest?</div>
+      <div class="q-hint">Tap the image that most closely matches how saturated your pad was at its heaviest. You can also tap a selected pad again to fine-tune the fill level.</div>
+
+      <!-- 2x2 grid of visual pad options -->
+      <div class="pad-scorer-grid" id="padScorerGrid">
+
+        <!-- Option 0: None/spotting -->
+        <div class="pad-option" data-padlevel="0" data-score="0" onclick="selectPadOption(this)">
+          <div class="pad-check"><div class="pad-check-inner">✓</div></div>
+          <svg viewBox="0 0 80 110" width="100%" height="90" xmlns="http://www.w3.org/2000/svg">
+            <rect x="10" y="5" width="60" height="100" rx="30" fill="#f0ece8" stroke="#d0ccc8" stroke-width="1.5"/>
+            <line x1="22" y1="28" x2="58" y2="28" stroke="#e5e0db" stroke-width=".8"/>
+            <line x1="18" y1="42" x2="62" y2="42" stroke="#e5e0db" stroke-width=".8"/>
+            <line x1="16" y1="56" x2="64" y2="56" stroke="#e5e0db" stroke-width=".8"/>
+            <line x1="16" y1="70" x2="64" y2="70" stroke="#e5e0db" stroke-width=".8"/>
+            <line x1="16" y1="84" x2="64" y2="84" stroke="#e5e0db" stroke-width=".8"/>
+            <rect x="1" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+            <rect x="70" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+          </svg>
+          <div class="pad-tap-chip">Tap to adjust ↕</div>
+          <div class="pad-opt-name">None / spotting</div>
+          <div class="pad-opt-desc">Clean or barely stained</div>
+        </div>
+
+        <!-- Option 1: Light -->
+        <div class="pad-option" data-padlevel="1" data-score="1" onclick="selectPadOption(this)">
+          <div class="pad-check"><div class="pad-check-inner">✓</div></div>
+          <svg viewBox="0 0 80 110" width="100%" height="90" xmlns="http://www.w3.org/2000/svg">
+            <defs><clipPath id="pc1"><rect x="10" y="5" width="60" height="100" rx="30"/></clipPath>
+            <radialGradient id="pg1" cx="50%" cy="65%" r="35%"><stop offset="0%" stop-color="#D4889A"/><stop offset="100%" stop-color="#B03050"/></radialGradient></defs>
+            <rect x="10" y="5" width="60" height="100" rx="30" fill="#f0ece8" stroke="#d0ccc8" stroke-width="1.5"/>
+            <ellipse cx="40" cy="72" rx="16" ry="20" fill="url(#pg1)" clip-path="url(#pc1)" opacity="0.72"/>
+            <line x1="22" y1="28" x2="58" y2="28" stroke="#e0dbd6" stroke-width=".8"/>
+            <line x1="18" y1="42" x2="62" y2="42" stroke="#ddd8d3" stroke-width=".8"/>
+            <line x1="16" y1="56" x2="64" y2="56" stroke="#d8d3ce" stroke-width=".8"/>
+            <line x1="16" y1="70" x2="64" y2="70" stroke="#d5d0cb" stroke-width=".8"/>
+            <line x1="16" y1="84" x2="64" y2="84" stroke="#d8d3ce" stroke-width=".8"/>
+            <rect x="1" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+            <rect x="70" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+          </svg>
+          <div class="pad-tap-chip">Tap to adjust ↕</div>
+          <div class="pad-opt-name">Light (&lt;¼ soaked)</div>
+          <div class="pad-opt-desc">Small central stain</div>
+        </div>
+
+        <!-- Option 2: Moderate -->
+        <div class="pad-option" data-padlevel="2" data-score="5" onclick="selectPadOption(this)">
+          <div class="pad-check"><div class="pad-check-inner">✓</div></div>
+          <svg viewBox="0 0 80 110" width="100%" height="90" xmlns="http://www.w3.org/2000/svg">
+            <defs><clipPath id="pc2"><rect x="10" y="5" width="60" height="100" rx="30"/></clipPath>
+            <radialGradient id="pg2" cx="50%" cy="55%" r="50%"><stop offset="0%" stop-color="#B03050"/><stop offset="100%" stop-color="#8B1A34"/></radialGradient></defs>
+            <rect x="10" y="5" width="60" height="100" rx="30" fill="#f0ece8" stroke="#d0ccc8" stroke-width="1.5"/>
+            <ellipse cx="40" cy="58" rx="25" ry="42" fill="url(#pg2)" clip-path="url(#pc2)" opacity="0.78"/>
+            <line x1="22" y1="28" x2="58" y2="28" stroke="#c8d0c9" stroke-width=".8"/>
+            <line x1="18" y1="42" x2="62" y2="42" stroke="#c0c8c1" stroke-width=".8"/>
+            <line x1="16" y1="56" x2="64" y2="56" stroke="#b8c0b9" stroke-width=".8"/>
+            <line x1="16" y1="70" x2="64" y2="70" stroke="#c0c8c1" stroke-width=".8"/>
+            <line x1="16" y1="84" x2="64" y2="84" stroke="#c8d0c9" stroke-width=".8"/>
+            <rect x="1" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+            <rect x="70" y="38" width="9" height="34" rx="4" fill="#e8e4e0" stroke="#d5d0cb" stroke-width="1"/>
+          </svg>
+          <div class="pad-tap-chip">Tap to adjust ↕</div>
+          <div class="pad-opt-name">Moderate (½ soaked)</div>
+          <div class="pad-opt-desc">Covers most of center</div>
+        </div>
+
+        <!-- Option 3: Heavy -->
+        <div class="pad-option" data-padlevel="3" data-score="10" onclick="selectPadOption(this)">
+          <div class="pad-check"><div class="pad-check-inner">✓</div></div>
+          <svg viewBox="0 0 80 110" width="100%" height="90" xmlns="http://www.w3.org/2000/svg">
+            <defs><clipPath id="pc3"><rect x="10" y="5" width="60" height="100" rx="30"/></clipPath>
+            <radialGradient id="pg3" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#8B1A34"/><stop offset="100%" stop-color="#5C1228"/></radialGradient></defs>
+            <rect x="10" y="5" width="60" height="100" rx="30" fill="#f0ece8" stroke="#d0ccc8" stroke-width="1.5"/>
+            <rect x="10" y="5" width="60" height="100" rx="30" fill="url(#pg3)" clip-path="url(#pc3)" opacity="0.9"/>
+            <line x1="22" y1="28" x2="58" y2="28" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+            <line x1="18" y1="42" x2="62" y2="42" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+            <line x1="16" y1="56" x2="64" y2="56" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+            <line x1="16" y1="70" x2="64" y2="70" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+            <line x1="16" y1="84" x2="64" y2="84" stroke="rgba(255,255,255,.15)" stroke-width=".8"/>
+            <rect x="1" y="38" width="9" height="34" rx="4" fill="#FDE8EE" stroke="#D4889A" stroke-width="1"/>
+            <rect x="70" y="38" width="9" height="34" rx="4" fill="#FDE8EE" stroke="#D4889A" stroke-width="1"/>
+          </svg>
+          <div class="pad-tap-chip">Tap to adjust ↕</div>
+          <div class="pad-opt-name">Heavy (fully soaked)</div>
+          <div class="pad-opt-desc">Saturated edge to edge</div>
+        </div>
+
+      </div>
+
+      <!-- Overflow option — full width, red-flag -->
+      <div class="pad-option-overflow" data-padlevel="4" data-score="20" id="padOverflow" onclick="selectPadOverflow(this)">
+        <div class="pad-check"><div class="pad-check-inner">✓</div></div>
+        <svg viewBox="0 0 50 70" width="44" height="56" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+          <defs><clipPath id="pc4"><rect x="5" y="3" width="40" height="64" rx="20"/></clipPath>
+          <radialGradient id="pg4" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#5C1228"/><stop offset="100%" stop-color="#2A0810"/></radialGradient></defs>
+          <rect x="5" y="3" width="40" height="64" rx="20" fill="url(#pg4)" clip-path="url(#pc4)"/>
+          <rect x="5" y="3" width="40" height="64" rx="20" fill="none" stroke="#2A0810" stroke-width="1.5"/>
+          <!-- drips -->
+          <ellipse cx="25" cy="68" rx="8" ry="4" fill="#5C1228" opacity="0.6"/>
+          <ellipse cx="14" cy="65" rx="4" ry="3" fill="#5C1228" opacity="0.4"/>
+          <ellipse cx="36" cy="66" rx="3" ry="2.5" fill="#5C1228" opacity="0.4"/>
+          <rect x="0" y="22" width="5" height="22" rx="2.5" fill="#5C1228" opacity="0.7"/>
+          <rect x="45" y="22" width="5" height="22" rx="2.5" fill="#5C1228" opacity="0.7"/>
+        </svg>
+        <div class="overflow-text">
+          <div class="pad-opt-name">Overflow / leaked through</div>
+          <div class="pad-opt-desc">Soaked through pad and onto clothing or bedding · ⚠️ May require urgent evaluation</div>
+        </div>
+      </div>
+
+      <!-- Score readout -->
+      <div class="pad-score-chip">
+        <div class="pad-score-label">Saturation level</div>
+        <div style="text-align:right;">
+          <div class="pad-score-val" id="padScoreVal">—</div>
+          <div class="pad-score-desc" id="padScoreDesc">Select a pad above</div>
+        </div>
+      </div>
+
+      <hr class="div"/>
+      <div class="section-sub">Clots</div>
+      <div class="q-hint">At your heaviest, were you passing any clots?</div>
+      <div class="opt-card sel" data-group="clots" data-val="none"><div class="opt-text"><div class="opt-title">No clots</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="clots" data-val="small"><div class="opt-text"><div class="opt-title">Small clots (smaller than a quarter)</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="clots" data-val="large"><div class="opt-text"><div class="opt-title">Large clots (larger than a quarter)</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="clots" data-val="flooding"><div class="opt-text"><div class="opt-title">Flooding or gushing</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+
+      <hr class="div"/>
+      <div class="section-sub">Soaking rate</div>
+      <div class="q-hint">At your heaviest, how often were you changing protection?</div>
+      <div class="opt-card sel" data-group="soakrate" data-val="lt1hr"><div class="opt-text"><div class="opt-title">Less than once per hour</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="soakrate" data-val="1hr"><div class="opt-text"><div class="opt-title">About once per hour</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+      <div class="opt-card" data-group="soakrate" data-val="gt1hr"><div class="opt-text"><div class="opt-title">More than once per hour</div><div class="opt-desc">⚠️ This may indicate heavy or emergency-level bleeding</div></div><div class="radio-dot"><div class="radio-inner"></div></div></div>
+
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('duration')">← Back</button><button class="btn-next" onclick="goTo('symptoms')">Continue</button></div></div>
+  </div>
+
+  <!-- S-symptoms: Symptoms + risk factors -->
+  <div id="sc_symptoms" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="q-scroll">
+      <div class="q-eyebrow">Almost done</div>
+      <div class="q-headline">Any other symptoms?</div>
+      <div class="q-hint">Select all that apply — even if you're not sure they're related.</div>
+      <div class="opt-card multi" data-group="sx" data-val="fatigue"><div class="opt-icon">😴</div><div class="opt-text"><div class="opt-title">Fatigue or weakness</div><div class="opt-desc">Unusual tiredness, may signal anemia</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="sx" data-val="pelvic_pain"><div class="opt-icon">🫁</div><div class="opt-text"><div class="opt-title">Pelvic pain or cramping</div><div class="opt-desc">Pressure or discomfort in your lower belly</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="sx" data-val="dyspareunia"><div class="opt-icon">💔</div><div class="opt-text"><div class="opt-title">Pain during sex</div><div class="opt-desc">Discomfort during or after intercourse</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="sx" data-val="discharge"><div class="opt-icon">💧</div><div class="opt-text"><div class="opt-title">Unusual discharge</div><div class="opt-desc">Changes in color, odor, or consistency</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="sx" data-val="bloating"><div class="opt-icon">🌿</div><div class="opt-text"><div class="opt-title">Bloating or abdominal fullness</div><div class="opt-desc">Persistent fullness that doesn't go away</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="sx" data-val="dizziness"><div class="opt-icon">💫</div><div class="opt-text"><div class="opt-title">Dizziness or lightheadedness</div><div class="opt-desc">Feeling faint, especially with bleeding</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div id="contextSxExtra"></div>
+      <hr class="div"/>
+      <div class="section-sub">Medical history</div>
+      <div class="opt-card multi" data-group="rf" data-val="bleeding_disorder"><div class="opt-icon">🧬</div><div class="opt-text"><div class="opt-title">Bleeding disorder</div><div class="opt-desc">Von Willebrand disease, platelet dysfunction, or clotting issues</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="rf" data-val="thyroid"><div class="opt-icon">🦋</div><div class="opt-text"><div class="opt-title">Thyroid condition</div><div class="opt-desc">Hypothyroidism, hyperthyroidism, or thyroid disease</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="rf" data-val="pcos"><div class="opt-icon">🔬</div><div class="opt-text"><div class="opt-title">PCOS or hormone imbalance</div><div class="opt-desc">Polycystic ovary syndrome or hormonal disorder</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+      <div class="opt-card multi" data-group="rf" data-val="cancer_hx"><div class="opt-icon">⚠️</div><div class="opt-text"><div class="opt-title">Personal or family history of gynecologic cancer</div><div class="opt-desc">Endometrial, cervical, ovarian, or related cancers</div></div><div class="check-box"><div class="check-mark">✓</div></div></div>
+    </div>
+    <div class="q-footer"><div class="footer-row"><button class="btn-back" onclick="goTo('volume')">← Back</button><button class="btn-next" onclick="submitAndShowResults()">See results →</button></div></div>
+  </div>
+
+  <!-- S-results -->
+  <div id="sc_results" class="hidden" style="display:none;flex-direction:column;flex:1;">
+    <div class="result-scroll" id="resultsBody"></div>
+  </div>
+
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     ADMIN
+══════════════════════════════════════ -->
+<div id="adminApp" class="hidden">
+  <div id="adminLogin" class="admin-shell">
+    <div class="admin-login">
+      <h2><em>AUB</em>rey Admin</h2>
+      <p>Know Your Flow · Research Dashboard · Jefferson Health 2026</p>
+      <div class="field"><label>Username</label><input type="text" id="adminUser" placeholder="admin"/></div>
+      <div class="field"><label>Password</label><input type="password" id="adminPass" placeholder="••••••••"/></div>
+      <div class="login-err" id="loginErr"></div>
+      <button class="btn-full" onclick="adminLogin()">Sign in</button>
+      <button class="btn-outline" style="margin-top:8px;" onclick="showPatient()">← Back to assessment</button>
+    </div>
+  </div>
+  <div id="adminDash" class="admin-shell hidden">
+    <div class="admin-header">
+      <div><h1><em>AUB</em>rey</h1><p>Know Your Flow · Research Dashboard · Jefferson Health Pilot 2026</p></div>
+      <button class="btn-logout" onclick="adminLogout()">Sign out</button>
+    </div>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="admin-controls">
+      <input class="search-input" id="searchInput" placeholder="Search by password (e.g. 001)..." oninput="renderTable()"/>
+      <select class="filter-sel" id="filterSev" onchange="renderTable()">
+        <option value="">All severities</option>
+        <option value="low">Low urgency</option>
+        <option value="mod">Evaluate soon</option>
+        <option value="urg">Urgent</option>
+      </select>
+      <select class="filter-sel" id="filterCtx" onchange="renderTable()">
+        <option value="">All contexts</option>
+        <option value="general">General</option>
+        <option value="abortion_medical">Medical abortion</option>
+        <option value="abortion_procedural">Procedural abortion</option>
+        <option value="postpartum">Postpartum</option>
+        <option value="post_procedure">Post-procedure</option>
+        <option value="new_medication">New medication</option>
+        <option value="pregnant">Pregnant</option>
+      </select>
+      <button class="btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn-export" style="background:#8B1A34;opacity:.7;" onclick="confirmClear()">🗑 Clear data</button>
+    </div>
+    <div class="submissions-table">
+      <div class="t-head">
+        <div class="th">Study ID</div>
+        <div class="th">Date / Time</div>
+        <div class="th">Severity</div>
+        <div class="th">Context</div>
+        <div class="th">Sessions</div>
+        <div class="th">Bleeding types</div>
+        <div class="th">View</div>
+      </div>
+      <div id="tableBody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="detailModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// SCREEN REGISTRY & STATE
+// ══════════════════════════════════════════════════════
+var SCREENS = ['0','id','return','lastresults','pregnant','context','ctx_detail',
+  'contraception','repro','menopause','age','bleedtype','duration','volume','symptoms','results'];
+
+var TOTAL_STEPS = 8;
+var STEP_MAP = {
+  context:1, ctx_detail:1, contraception:2, repro:3, menopause:4, age:5,
+  bleedtype:6, duration:7, volume:8, symptoms:9
+};
+
+var current = '0';
+var studyId = '';
+var visitContext = '';
+var pregnancyContinued = false;
+var lastResultsData = null;
+var padLevels = [0,0,0,0,0,0,0,0];
+var PAD_SCORES = [0,1,5,10,20]; // kept for compat
+var ADMIN_USER = 'aubrey_admin';
+var ADMIN_PASS = 'Jefferson2026!';
+var adminLoggedIn = false;
+var allSubmissions = [];
+var BIOMETRIC_KEY = 'aubrey_bio_v1';
+
+// ══════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════
+function goTo(n) {
+  var nStr = String(n);
+  SCREENS.forEach(function(id) {
+    var el = document.getElementById('sc_'+id) || document.getElementById('sc'+id);
+    if (el) { el.style.display='none'; el.classList.add('hidden'); }
+  });
+  current = nStr;
+  var el = document.getElementById('sc_'+nStr) || document.getElementById('sc'+nStr);
+  if (el) { el.style.display='flex'; el.classList.remove('hidden'); }
+
+  // Progress
+  var prog = document.getElementById('progWrap');
+  var step = STEP_MAP[nStr];
+  if (step) {
+    prog.classList.remove('hidden');
+    document.getElementById('progFill').style.width = Math.round((step/TOTAL_STEPS)*100)+'%';
+    document.getElementById('progLabel').textContent = 'Step '+step+' of '+TOTAL_STEPS;
+  } else { prog.classList.add('hidden'); }
+
+  var scEl = document.getElementById('sc_'+nStr) || document.getElementById('sc'+nStr);
+  var scroll = scEl && scEl.querySelector('.q-scroll,.result-scroll,.splash,.return-screen');
+  if (scroll) scroll.scrollTop = 0;
+}
+
+// ══════════════════════════════════════════════════════
+// BIOMETRIC
+// ══════════════════════════════════════════════════════
+function bioAvail() {
+  return window.PublicKeyCredential &&
+    typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable === 'function';
+}
+async function checkBio() {
+  if (!bioAvail()) return false;
+  try { return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch(e) { return false; }
+}
+function saveBioLink(credId, sid) {
+  try { localStorage.setItem(BIOMETRIC_KEY, JSON.stringify({credId,studyId:sid,ts:new Date().toISOString()})); } catch(e){}
+}
+function loadBioLink() {
+  try { var r=localStorage.getItem(BIOMETRIC_KEY); return r?JSON.parse(r):null; } catch(e){return null;}
+}
+function toB64(buf) { return btoa(String.fromCharCode.apply(null,new Uint8Array(buf))); }
+function fromB64(s) { var b=atob(s),u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+
+async function registerBio(sid) {
+  if (!await checkBio()) return false;
+  try {
+    var ch=new Uint8Array(32); window.crypto.getRandomValues(ch);
+    var cred = await navigator.credentials.create({publicKey:{
+      challenge:ch, rp:{name:'AUBrey',id:location.hostname||'localhost'},
+      user:{id:new TextEncoder().encode(sid),name:sid,displayName:'Study '+sid},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required'},
+      timeout:60000
+    }});
+    if(cred){saveBioLink(toB64(cred.rawId),sid);return true;}
+  } catch(e){}
+  return false;
+}
+
+async function authenticateBiometric() {
+  var link=loadBioLink(); if(!link) return;
+  var btn=document.getElementById('bioBtn'), status=document.getElementById('bioStatus');
+  btn.disabled=true; status.textContent='Verifying…'; status.className='biometric-status';
+  try {
+    var ch=new Uint8Array(32); window.crypto.getRandomValues(ch);
+    var assertion = await navigator.credentials.get({publicKey:{
+      challenge:ch,
+      allowCredentials:[{type:'public-key',id:fromB64(link.credId)}],
+      userVerification:'required',timeout:60000
+    }});
+    if(assertion){
+      status.textContent='✓ Verified'; status.className='biometric-status success';
+      studyId=link.studyId;
+      setTimeout(handleReturningUser,600);
+    }
+  } catch(e){
+    status.textContent='Biometric failed — please enter your code manually.';
+    status.className='biometric-status error';
+    btn.disabled=false;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// STUDY ID + SESSION
+// ══════════════════════════════════════════════════════
+async function validateId() {
+  var val = document.getElementById('studyIdInput').value.trim().toUpperCase();
+  var err = document.getElementById('idError');
+  if (!val || val.length !== 4 || !/^[A-Z][0-9]{3}$/.test(val)) { err.textContent='Please enter your password (1 letter + 3 numbers).'; return; }
+  err.textContent=''; studyId=val;
+  var sessions = await getSessionsForId(studyId);
+  if (sessions.length > 0) {
+    handleReturningUser();
+  } else {
+    var bioOk = await checkBio();
+    if (bioOk) { var reg = await registerBio(studyId); if(reg) showToast('Face ID registered — use it next time to skip your password 🔐'); }
+    logSession(studyId,'first');
+    goTo('context');
+  }
+}
+
+document.getElementById('studyIdInput').addEventListener('input',function(){var v = this.value.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  // First char must be letter, remaining must be digits
+  var letter = v.match(/^[A-Z]/) ? v[0] : '';
+  var digits = v.replace(/[^0-9]/g,'').slice(0,3);
+  this.value = (letter + digits).slice(0,4);});
+document.getElementById('studyIdInput').addEventListener('keydown',function(e){if(e.key==='Enter')validateId();});
+
+async function handleReturningUser() {
+  var sessions = await getSessionsForId(studyId);
+  var lastSub = await getLastSubmission(studyId);
+  lastResultsData = lastSub;
+  var sub = document.getElementById('returnSub');
+  sub.textContent = 'You\'ve used AUBrey '+(sessions.length||1)+' time'+(sessions.length===1?'':('s'))+'. What would you like to do?';
+  var stats=document.getElementById('sessionStats');
+  var last=sessions.length>0?new Date(sessions[sessions.length-1].timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+  var first=sessions.length>0?new Date(sessions[0].timestamp).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+  stats.innerHTML='<div class="session-stat-row"><span class="session-stat-label">Total sessions</span><span class="session-stat-val">'+(sessions.length||1)+'</span></div>'+
+    '<div class="session-stat-row"><span class="session-stat-label">First use</span><span class="session-stat-val">'+first+'</span></div>'+
+    '<div class="session-stat-row"><span class="session-stat-label">Last use</span><span class="session-stat-val">'+last+'</span></div>';
+  logSession(studyId,'returning');
+  goTo('return');
+}
+
+function startNewAssessment() {
+  visitContext=''; pregnancyContinued=false;
+  document.querySelectorAll('.opt-card').forEach(function(c){c.classList.remove('sel');});
+  document.querySelectorAll('.opt-card[data-group="repro"][data-val="active"]').forEach(function(c){c.classList.add('sel');});
+  document.querySelectorAll('.opt-card[data-group="meno"][data-val="confirmed"]').forEach(function(c){c.classList.add('sel');});
+  document.querySelectorAll('.opt-card[data-group="age"][data-val="u25"]').forEach(function(c){c.classList.add('sel');});
+  document.querySelectorAll('.opt-card[data-group="dur"][data-val="acute"]').forEach(function(c){c.classList.add('sel');});
+  document.querySelectorAll('.opt-card[data-group="soakrate"][data-val="lt1hr"]').forEach(function(c){c.classList.add('sel');});
+  document.querySelectorAll('.opt-card[data-group="clots"][data-val="none"]').forEach(function(c){c.classList.add('sel');});
+  padSelectedLevel=-1; padSubLevel=0;
+  document.querySelectorAll('.pad-option').forEach(function(o){o.classList.remove('sel');});
+  var ov=document.getElementById('padOverflow'); if(ov) ov.classList.remove('sel');
+  updatePadScoreDisplay();
+  goTo('context');
+}
+
+// ══════════════════════════════════════════════════════
+// CONTEXT BRANCHING
+// ══════════════════════════════════════════════════════
+function handleContextNext() {
+  var sel = document.querySelector('.opt-card[data-group="ctx"].sel');
+  if (!sel) { showToast('Please select an option to continue.'); return; }
+  visitContext = sel.getAttribute('data-val');
+
+  // Pregnant → warning screen
+  if (visitContext === 'pregnant') { goTo('pregnant'); return; }
+
+  // All others with follow-up detail screens
+  var needsDetail = ['abortion_medical','abortion_procedural','postpartum','post_procedure','new_medication'];
+  if (needsDetail.indexOf(visitContext) > -1) { buildContextDetail(visitContext); goTo('ctx_detail'); }
+  else { goTo('contraception'); }
+}
+
+function continueFromPregnancy() {
+  pregnancyContinued = true;
+  goTo('contraception');
+}
+
+var CTX_LABELS = {
+  general:'General concern', abortion_medical:'Medical abortion', abortion_procedural:'Procedural abortion',
+  postpartum:'Postpartum', post_procedure:'Post-procedure', new_medication:'New medication', pregnant:'Pregnant'
+};
+
+function buildContextDetail(ctx) {
+  var body = document.getElementById('ctxDetailBody');
+  var html = '';
+  if (ctx === 'abortion_medical') {
+    html = '<div class="q-eyebrow">Medical abortion</div><div class="q-headline">A few follow-up questions</div><div class="q-hint">Helping us understand the timing and type of your abortion allows us to better interpret your bleeding.</div>'+
+      optGroup('ab_type','single','Which medication did you take?',[
+        {val:'mife_miso',title:'Mifepristone + misoprostol',desc:'The standard 2-pill regimen'},
+        {val:'miso_only',title:'Misoprostol only'},
+        {val:'unsure',title:'Not sure'},
+      ])+
+      optGroup('ab_days','single','How many days ago did you take the medication?',[
+        {val:'lt7',title:'Less than 7 days ago'},{val:'7-14',title:'7 – 14 days ago'},
+        {val:'15-30',title:'15 – 30 days ago'},{val:'gt30',title:'More than 30 days ago'},
+      ])+
+      '<div class="section-sub">Concerning symptoms</div>'+
+      optGroup('ab_sx','multi','Are you experiencing any of the following?',[
+        {val:'fever',title:'Fever',desc:'Temperature over 100.4°F / 38°C'},
+        {val:'foul_odor',title:'Foul-smelling discharge or bleeding',desc:'May indicate infection'},
+        {val:'severe_pain',title:'Severe abdominal pain',desc:'Not relieved by ibuprofen'},
+        {val:'none',title:'None of the above'},
+      ]);
+  } else if (ctx === 'abortion_procedural') {
+    html = '<div class="q-eyebrow">Procedural abortion</div><div class="q-headline">A few follow-up questions</div>'+
+      optGroup('ab_proc_type','single','What type of procedure did you have?',[
+        {val:'mva',title:'Manual vacuum aspiration (MVA)'},{val:'de',title:'D&E (dilation and evacuation)'},
+        {val:'dc',title:'D&C (dilation and curettage)'},{val:'unsure',title:'Not sure'},
+      ])+
+      optGroup('ab_days','single','How many days ago was your procedure?',[
+        {val:'lt7',title:'Less than 7 days ago'},{val:'7-14',title:'7 – 14 days ago'},
+        {val:'15-30',title:'15 – 30 days ago'},{val:'gt30',title:'More than 30 days ago'},
+      ])+
+      optGroup('ab_sx','multi','Any of the following?',[
+        {val:'fever',title:'Fever',desc:'Over 100.4°F / 38°C'},
+        {val:'foul_odor',title:'Foul-smelling discharge'},{val:'severe_pain',title:'Severe pain'},
+        {val:'none',title:'None of the above'},
+      ]);
+  } else if (ctx === 'postpartum') {
+    html = '<div class="q-eyebrow">Postpartum</div><div class="q-headline">A few follow-up questions</div>'+
+      optGroup('pp_delivery','single','How did you deliver?',[
+        {val:'vaginal',title:'Vaginal delivery'},{val:'cesarean',title:'Cesarean section (C-section)'},
+      ])+
+      optGroup('pp_weeks','single','How many weeks postpartum are you?',[
+        {val:'lt1wk',title:'Less than 1 week'},{val:'1-2wk',title:'1 – 2 weeks'},
+        {val:'3-6wk',title:'3 – 6 weeks'},{val:'gt6wk',title:'More than 6 weeks'},
+      ])+
+      optGroup('pp_bf','single','Are you breastfeeding?',[
+        {val:'yes',title:'Yes, breastfeeding or pumping'},{val:'no',title:'No'},
+      ])+
+      optGroup('pp_sx','multi','Any of the following?',[
+        {val:'fever',title:'Fever',desc:'Over 100.4°F / 38°C'},
+        {val:'foul_odor',title:'Foul-smelling lochia or discharge'},
+        {val:'heavy_increase',title:'Bleeding that has gotten heavier',desc:'After initially slowing down'},
+        {val:'none',title:'None of the above'},
+      ]);
+  } else if (ctx === 'post_procedure') {
+    html = '<div class="q-eyebrow">Post-procedure</div><div class="q-headline">A few follow-up questions</div>'+
+      optGroup('proc_type','single','Which procedure did you have?',[
+        {val:'iud_insertion',title:'IUD insertion',desc:'Hormonal or copper'},
+        {val:'biopsy',title:'Endometrial or cervical biopsy'},
+        {val:'hysteroscopy',title:'Hysteroscopy'},{val:'dc',title:'D&C'},
+        {val:'other',title:'Other gynecologic procedure'},
+      ])+
+      optGroup('proc_days','single','How many days ago was your procedure?',[
+        {val:'lt7',title:'Less than 7 days ago'},{val:'7-14',title:'7 – 14 days ago'},
+        {val:'15-30',title:'15 – 30 days ago'},{val:'gt30',title:'More than 30 days ago'},
+      ])+
+      '<div class="warn-banner" style="margin-top:8px;"><strong>ℹ️ Expected bleeding after IUD insertion</strong>Irregular spotting or light bleeding for up to 3–6 months is common and expected after hormonal IUD insertion. If you have a hormonal IUD placed within the past 6 months, some irregular bleeding may be normal.</div>'+
+      optGroup('proc_sx','multi','Any of the following?',[
+        {val:'fever',title:'Fever'},{val:'foul_odor',title:'Foul-smelling discharge'},
+        {val:'severe_cramping',title:'Severe cramping',desc:'Worse than expected'},
+        {val:'none',title:'None of the above'},
+      ]);
+  } else if (ctx === 'new_medication') {
+    html = '<div class="q-eyebrow">New medication</div><div class="q-headline">A few follow-up questions</div>'+
+      optGroup('med_type','single','What type of medication or hormone did you start?',[
+        {val:'combined_hc',title:'Combined hormonal contraception',desc:'Pill, patch, or ring with estrogen + progestin'},
+        {val:'progestin_only',title:'Progestin-only contraception',desc:'Mini-pill, implant, injection'},
+        {val:'hrt',title:'Hormone replacement therapy (HRT)',desc:'For menopause symptoms'},
+        {val:'other',title:'Other hormone or medication'},
+      ])+
+      optGroup('med_weeks','single','How long ago did you start?',[
+        {val:'lt2wk',title:'Less than 2 weeks ago'},{val:'2-4wk',title:'2 – 4 weeks ago'},
+        {val:'1-3mo',title:'1 – 3 months ago'},{val:'gt3mo',title:'More than 3 months ago'},
+      ])+
+      '<div class="warn-banner" style="margin-top:8px;"><strong>ℹ️ Breakthrough bleeding on new hormones</strong>Irregular or breakthrough bleeding in the first 1–3 months after starting new hormonal contraception or HRT is common and often self-resolves. If bleeding persists beyond 3 months or becomes heavy, evaluation is recommended.</div>';
+  }
+  body.innerHTML = html;
+}
+
+function optGroup(group, type, label, opts) {
+  var isMulti = type==='multi';
+  var html = '<div class="section-sub">'+label+'</div>';
+  opts.forEach(function(o,i) {
+    var def = !isMulti && i===0 ? ' sel' : '';
+    var ctrl = isMulti ? '<div class="check-box"><div class="check-mark">✓</div></div>' : '<div class="radio-dot"><div class="radio-inner"></div></div>';
+    html += '<div class="opt-card'+(isMulti?' multi':'')+def+'" data-group="'+group+'" data-val="'+o.val+'">'+
+      '<div class="opt-text"><div class="opt-title">'+o.title+'</div>'+(o.desc?'<div class="opt-desc">'+o.desc+'</div>':'')+
+      '</div>'+ctrl+'</div>';
+  });
+  return html;
+}
+
+function goToContraception() { goTo('contraception'); }
+function backFromContraception() {
+  var needsDetail = ['abortion_medical','abortion_procedural','postpartum','post_procedure','new_medication'];
+  if (needsDetail.indexOf(visitContext)>-1) goTo('ctx_detail');
+  else goTo('context');
+}
+
+function goToReproStatus() {
+  // Postpartum and abortion branches skip reproductive status / menopause
+  var skip = ['abortion_medical','abortion_procedural','postpartum'];
+  if (skip.indexOf(visitContext)>-1) goTo('age');
+  else goTo('repro');
+}
+function backFromAge() {
+  var skip = ['abortion_medical','abortion_procedural','postpartum'];
+  if (skip.indexOf(visitContext)>-1) goTo('contraception');
+  else goTo('menopause');
+}
+
+// ══════════════════════════════════════════════════════
+// OPTION CARD INTERACTION
+// ══════════════════════════════════════════════════════
+document.addEventListener('click', function(e) {
+  var card = e.target.closest('.opt-card');
+  if (card && !e.target.closest('button')) {
+    var group = card.getAttribute('data-group'); if(!group) return;
+    if (card.classList.contains('multi')) {
+      card.classList.toggle('sel');
+    } else {
+      document.querySelectorAll('.opt-card[data-group="'+group+'"]').forEach(function(c){c.classList.remove('sel');});
+      card.classList.add('sel');
+    }
+  }
+});
+
+// ══════════════════════════════════════════════════════
+// HYBRID VISUAL PAD SCORER
+// ══════════════════════════════════════════════════════
+var padSelectedLevel = -1;  // -1 = nothing selected
+var PAD_LABELS = ['None / spotting','Light (<¼ soaked)','Moderate (~½ soaked)','Heavy (fully soaked)','Overflow / leaked through'];
+var PAD_SCORES_VIS = [0, 1, 5, 10, 20];
+
+// Option 1 hybrid: tapping an already-selected card cycles fill sub-level
+// sub-levels add granularity within the main bucket
+var padSubLevel = 0;  // 0-2 within each main level
+var PAD_SUB_SCORES = [[0,0,0],[1,2,3],[5,7,8],[10,12,15],[20,20,20]];
+
+function selectPadOption(el) {
+  var level = parseInt(el.getAttribute('data-padlevel'));
+  // If already selected, cycle sub-level (Option 1 tap-to-fill hybrid)
+  if (padSelectedLevel === level) {
+    padSubLevel = (padSubLevel + 1) % 3;
+  } else {
+    padSelectedLevel = level;
+    padSubLevel = 1; // start at mid sub-level
+    // Deselect overflow
+    var ov = document.getElementById('padOverflow');
+    if (ov) ov.classList.remove('sel');
+    // Deselect all grid options
+    document.querySelectorAll('.pad-option').forEach(function(o){o.classList.remove('sel');});
+    el.classList.add('sel');
+  }
+  updatePadScoreDisplay();
+}
+
+function selectPadOverflow(el) {
+  document.querySelectorAll('.pad-option').forEach(function(o){o.classList.remove('sel');});
+  el.classList.toggle('sel');
+  if (el.classList.contains('sel')) {
+    padSelectedLevel = 4;
+    padSubLevel = 0;
+  } else {
+    padSelectedLevel = -1;
+  }
+  updatePadScoreDisplay();
+}
+
+function updatePadScoreDisplay() {
+  var scoreEl = document.getElementById('padScoreVal');
+  var descEl  = document.getElementById('padScoreDesc');
+  if (padSelectedLevel < 0) {
+    scoreEl.textContent = '—';
+    descEl.textContent  = 'Select a pad above';
+    return;
+  }
+  var score = PAD_SUB_SCORES[padSelectedLevel][padSubLevel];
+  var label = PAD_LABELS[padSelectedLevel];
+  var subHints = ['','+',' ++'];
+  scoreEl.textContent = score + ' pts';
+  descEl.textContent  = label + (padSubLevel > 0 ? subHints[padSubLevel] : '');
+  // Update data attribute for result collection
+  var activeEl = document.querySelector('.pad-option.sel') || document.getElementById('padOverflow');
+  if (activeEl && activeEl.classList.contains('sel')) {
+    activeEl.setAttribute('data-score', score);
+  }
+}
+
+// Keep pad score variable for backwards compat with result collection
+function getPadScore() {
+  if (padSelectedLevel < 0) return 0;
+  return PAD_SUB_SCORES[padSelectedLevel][padSubLevel];
+}
+
+function buildPadGrid() { /* no-op — replaced by visual scorer */ }
+function updatePadScore() { updatePadScoreDisplay(); }
+
+// ══════════════════════════════════════════════════════
+// CONTEXT BADGE ON BLEEDING SCREEN
+// ══════════════════════════════════════════════════════
+function renderContextBadge() {
+  var el=document.getElementById('contextBadge');
+  if(visitContext&&visitContext!=='general'){
+    el.innerHTML='<div class="context-badge">📌 '+CTX_LABELS[visitContext]+'</div>';
+  } else { el.innerHTML=''; }
+}
+
+// Inject context-specific symptom fields
+function renderContextSxExtra() {
+  var el=document.getElementById('contextSxExtra');
+  var needs=['abortion_medical','abortion_procedural','postpartum','post_procedure'];
+  if(needs.indexOf(visitContext)>-1){
+    el.innerHTML='<div class="opt-card multi" data-group="sx" data-val="fever">'+
+      '<div class="opt-icon">🌡️</div><div class="opt-text"><div class="opt-title">Fever</div><div class="opt-desc">Temperature over 100.4°F / 38°C</div></div>'+
+      '<div class="check-box"><div class="check-mark">✓</div></div></div>'+
+      '<div class="opt-card multi" data-group="sx" data-val="foul_odor">'+
+      '<div class="opt-icon">⚠️</div><div class="opt-text"><div class="opt-title">Foul-smelling discharge or bleeding</div><div class="opt-desc">May indicate infection or retained tissue</div></div>'+
+      '<div class="check-box"><div class="check-mark">✓</div></div></div>';
+  } else { el.innerHTML=''; }
+}
+
+// Override goTo to trigger dynamic content
+var _goTo = goTo;
+goTo = function(n) {
+  _goTo(n);
+  if(String(n)==='bleedtype'){ renderContextBadge(); }
+  if(String(n)==='symptoms'){ renderContextSxExtra(); }
+};
+
+// ══════════════════════════════════════════════════════
+// COLLECT CONTEXT DETAIL DATA
+// ══════════════════════════════════════════════════════
+function getCtxDetailData() {
+  var d = {};
+  var groups = ['ab_type','ab_proc_type','ab_days','pp_delivery','pp_weeks','pp_bf',
+    'proc_type','proc_days','med_type','med_weeks'];
+  groups.forEach(function(g) {
+    var sel=document.querySelector('.opt-card[data-group="'+g+'"].sel');
+    if(sel) d[g]=sel.getAttribute('data-val');
+  });
+  var multiGroups=['ab_sx','pp_sx','proc_sx'];
+  multiGroups.forEach(function(g){
+    var vals=Array.from(document.querySelectorAll('.opt-card[data-group="'+g+'"].sel')).map(function(c){return c.getAttribute('data-val');});
+    if(vals.length) d[g]=vals;
+  });
+  return d;
+}
+
+// ══════════════════════════════════════════════════════
+// RESULT CALCULATION & SUBMISSION
+// ══════════════════════════════════════════════════════
+function getVal(group) {
+  var el=document.querySelector('.opt-card[data-group="'+group+'"].sel');
+  return el?el.getAttribute('data-val'):null;
+}
+function getMulti(group) {
+  return Array.from(document.querySelectorAll('.opt-card[data-group="'+group+'"].sel')).map(function(c){return c.getAttribute('data-val');});
+}
+function isBool(arr,val){ return arr.indexOf(val)>-1; }
+
+async function submitAndShowResults() {
+  var padScore = getPadScore();
+
+  var contracept = getMulti('contracept');
+  var bleedTypes = getMulti('bleed');
+  var symptoms   = getMulti('sx');
+  var riskFactors= getMulti('rf');
+  var soakRate   = getVal('soakrate');
+  var clots      = getVal('clots');
+
+  // Anticoagulant detection from contraception screen
+  var anticoagTypes = contracept.filter(function(c){return c.indexOf('anticoag_')===0;});
+  var hasAnticoag = anticoagTypes.length > 0;
+
+  // ── Severity scoring ──
+  var sev = 0;
+  if(isBool(bleedTypes,'PMB'))          sev+=4;
+  if(isBool(bleedTypes,'PCB'))          sev+=3;
+  if(isBool(bleedTypes,'HMB'))          sev+=2;
+  if(padScore>=50)                       sev+=2;
+  if(clots==='large'||clots==='flooding') sev+=2;
+  if(soakRate==='gt1hr')                 sev+=3;
+  if(getVal('meno')==='confirmed')       sev+=3;
+  if(getVal('age')==='55plus')           sev+=1;
+  if(isBool(riskFactors,'cancer_hx'))    sev+=3;
+  if(hasAnticoag)                        sev+=1;
+  if(isBool(symptoms,'dizziness'))       sev+=2;
+  if(isBool(symptoms,'fever'))           sev+=2;
+  if(visitContext==='pregnant')          sev+=3;
+  if(visitContext.indexOf('abortion')>-1 && (isBool(symptoms,'fever')||isBool(symptoms,'foul_odor'))) sev+=3;
+
+  var sevClass,sevIcon,sevTitle,sevDesc;
+  if(sev>=7){ sevClass='urg'; sevIcon='🚨'; sevTitle='Urgent evaluation recommended';
+    sevDesc='Your responses indicate symptoms or risk factors that require prompt assessment. Please discuss with your care team today, or seek emergency evaluation if you are soaking through more than one pad per hour, feel faint, or have a fever.';
+  } else if(sev>=3){ sevClass='mod'; sevIcon='⚠️'; sevTitle='Evaluation recommended soon';
+    sevDesc='Your responses suggest abnormal uterine bleeding that warrants clinical evaluation within the next few weeks. Your care team will review these responses.';
+  } else { sevClass='low'; sevIcon='✅'; sevTitle='Low urgency — routine monitoring';
+    sevDesc='Your responses suggest your symptoms are mild or consistent with expected patterns. Your care team will review these results.';
+  }
+
+  // ── Red flags ──
+  var rf_PMB   = isBool(bleedTypes,'PMB');
+  var rf_PCB   = isBool(bleedTypes,'PCB');
+  var rf_hemor = soakRate==='gt1hr' || clots==='flooding';
+  var rf_infec = isBool(symptoms,'fever') || isBool(symptoms,'foul_odor');
+
+  // ── PALM-COEIN ──
+  var palm_struct=[], palm_non=[], palm_flag=[], palm_iatrogen=[];
+  if(isBool(bleedTypes,'HMB'))                      palm_struct.push('M – Myometrial (Fibroid/Adenomyosis possible)');
+  if(isBool(bleedTypes,'IMB')||isBool(bleedTypes,'PCB')) palm_struct.push('P – Polyp possible');
+  if(isBool(symptoms,'pelvic_pain'))                palm_struct.push('A – Adenomyosis possible');
+  if(isBool(riskFactors,'pcos')||getVal('repro')==='irregular') palm_non.push('O – Ovulatory dysfunction');
+  if(isBool(riskFactors,'thyroid'))                 palm_non.push('O – Ovulatory (Thyroid)');
+  if(isBool(riskFactors,'bleeding_disorder')||hasAnticoag) palm_non.push('C – Coagulopathy / bleeding risk');
+  if(contracept.indexOf('copper_iud')>-1)           palm_iatrogen.push('I – Iatrogenic (Copper IUD)');
+  if(contracept.indexOf('hormonal_iud')>-1)         palm_iatrogen.push('I – Iatrogenic (Hormonal IUD)');
+  if(contracept.indexOf('injectable')>-1)           palm_iatrogen.push('I – Iatrogenic (Injectable)');
+  if(hasAnticoag)                                   palm_iatrogen.push('I – Iatrogenic (Anticoagulant)');
+  if(visitContext==='new_medication')               palm_iatrogen.push('I – Iatrogenic (New hormone/medication)');
+  if(rf_PMB||isBool(riskFactors,'cancer_hx')||getVal('meno')==='confirmed') palm_flag.push('⚠ Malignancy/Hyperplasia — must be excluded');
+
+  // ── Recommendations ──
+  var recs=[];
+  if(sev>=7){ recs.push({icon:'🏥',text:'Discuss your results with your care team today. If you are soaking through more than one pad per hour for two or more consecutive hours, feel faint, or have a fever over 100.4°F, seek emergency evaluation immediately.'}); }
+  else if(sev>=3){ recs.push({icon:'📅',text:'Schedule a follow-up appointment with your care team within the next 4–6 weeks to discuss your bleeding pattern.'}); }
+  else { recs.push({icon:'💬',text:'Your care team will review your responses. Bring any ongoing concerns to your next scheduled appointment.'}); }
+  if(rf_PMB) recs.push({icon:'🔬',text:'Postmenopausal bleeding requires evaluation. Your care team will likely recommend a transvaginal ultrasound and possible endometrial biopsy.'});
+  if(rf_PCB) recs.push({icon:'🔍',text:'Bleeding after intercourse warrants cervical evaluation. Ensure you are up to date on cervical cancer screening.'});
+  if(isBool(symptoms,'fatigue')||padScore>=50) recs.push({icon:'🩺',text:'A complete blood count (CBC) may be recommended to evaluate for anemia given your bleeding and/or fatigue.'});
+  if(rf_infec) recs.push({icon:'🌡️',text:'Signs of possible infection have been noted. Contact your care team today if you have a fever, foul-smelling discharge, or severe pain.'});
+  recs.push({icon:'📓',text:'Track your bleeding patterns between now and your next visit — note timing, volume, and any associated symptoms.'});
+
+  // ── Full data object ──
+  var data = {
+    // Identity & session
+    study_id: studyId,
+    timestamp: new Date().toISOString(),
+    session_number: (await getSessionsForId(studyId)).length,
+    auth_method: loadBioLink()&&loadBioLink().studyId===studyId?'biometric':'code',
+    device_type: /Mobi|Android/i.test(navigator.userAgent)?'mobile':'desktop',
+
+    // Context
+    visit_context: visitContext,
+    pregnancy_warned: visitContext==='pregnant',
+    pregnancy_continued: pregnancyContinued,
+    ctx_detail: getCtxDetailData(),
+
+    // Contraception & meds
+    contraception: contracept.filter(function(c){return c.indexOf('anticoag_')<0;}),
+    anticoagulant: hasAnticoag,
+    anticoagulant_types: anticoagTypes,
+
+    // Repro profile
+    period_status: getVal('repro')||'n/a',
+    menopause_status: getVal('meno')||'n/a',
+    age_group: getVal('age'),
+
+    // Bleeding
+    bleed_HMB: isBool(bleedTypes,'HMB'),
+    bleed_IMB: isBool(bleedTypes,'IMB'),
+    bleed_PCB: isBool(bleedTypes,'PCB'),
+    bleed_PMB: isBool(bleedTypes,'PMB'),
+    bleed_IRR: isBool(bleedTypes,'IRR'),
+    bleed_prolonged: isBool(bleedTypes,'prolonged'),
+    duration: getVal('dur'),
+    pad_score: padScore,
+    pad_level_selected: padSelectedLevel,
+    soaking_rate: soakRate,
+    clots: clots,
+
+    // Symptoms
+    sx_fatigue:      isBool(symptoms,'fatigue'),
+    sx_pelvic_pain:  isBool(symptoms,'pelvic_pain'),
+    sx_dyspareunia:  isBool(symptoms,'dyspareunia'),
+    sx_discharge:    isBool(symptoms,'discharge'),
+    sx_bloating:     isBool(symptoms,'bloating'),
+    sx_dizziness:    isBool(symptoms,'dizziness'),
+    sx_fever:        isBool(symptoms,'fever'),
+    sx_foul_odor:    isBool(symptoms,'foul_odor'),
+
+    // Risk factors
+    rf_bleeding_disorder: isBool(riskFactors,'bleeding_disorder'),
+    rf_thyroid:           isBool(riskFactors,'thyroid'),
+    rf_pcos:              isBool(riskFactors,'pcos'),
+    rf_cancer_hx:         isBool(riskFactors,'cancer_hx'),
+
+    // Output
+    severity_score:    sev,
+    severity_class:    sevClass,
+    palm_structural:   palm_struct,
+    palm_nonstructural:palm_non,
+    palm_iatrogenic:   palm_iatrogen,
+    palm_flagged:      palm_flag,
+    red_flag_PMB:      rf_PMB,
+    red_flag_PCB:      rf_PCB,
+    red_flag_hemorrhage: rf_hemor,
+    red_flag_infection:  rf_infec,
+    triage_tier:       sevClass==='urg'?'urgent':sevClass==='mod'?'evaluate_soon':'monitor',
+    recommendations:   recs.map(function(r){return r.text;}),
+    session_count_at_submission: (await getSessionsForId(studyId)).length,
+  };
+
+  saveSubmission(data);
+
+  // ── Render results ──
+  var badgesHTML='';
+  palm_struct.forEach(function(b){badgesHTML+='<span class="badge b-struct">'+b+'</span>';});
+  palm_non.forEach(function(b){badgesHTML+='<span class="badge b-non">'+b+'</span>';});
+  palm_iatrogen.forEach(function(b){badgesHTML+='<span class="badge b-iatrogen">'+b+'</span>';});
+  palm_flag.forEach(function(b){badgesHTML+='<span class="badge b-flag">'+b+'</span>';});
+  if(!badgesHTML) badgesHTML='<span class="badge b-non">N – Not yet classified</span>';
+
+  var recsHTML=recs.map(function(r){return '<div class="rec-item"><div class="rec-icon">'+r.icon+'</div><div class="rec-text">'+r.text+'</div></div>';}).join('');
+
+  var ctxSummary='';
+  if(visitContext&&visitContext!=='general'){
+    ctxSummary='<div class="context-summary"><strong>Context: '+CTX_LABELS[visitContext]+'</strong>';
+    var ctxD=data.ctx_detail;
+    if(ctxD.ab_days) ctxSummary+=' · '+ctxD.ab_days+' since procedure/medication';
+    if(ctxD.pp_weeks) ctxSummary+=' · '+ctxD.pp_weeks+' postpartum';
+    if(ctxD.proc_type) ctxSummary+=' · Procedure: '+ctxD.proc_type;
+    ctxSummary+='</div>';
+  }
+
+  document.getElementById('resultsBody').innerHTML=
+    '<div class="study-id-badge">Password: <strong>'+studyId+'</strong><span style="margin-left:auto;color:rgba(255,255,255,.4);font-size:.7rem;">'+new Date().toLocaleDateString()+'</span></div>'+
+    ctxSummary+
+    '<div class="sev-card sev-'+sevClass+'"><div class="sev-icon">'+sevIcon+'</div><div><div class="sev-title">'+sevTitle+'</div><div class="sev-desc">'+sevDesc+'</div></div></div>'+
+    '<div class="res-section">Possible PALM-COEIN categories</div>'+
+    '<div class="badge-row" style="margin-bottom:14px;">'+badgesHTML+'</div>'+
+    '<div class="res-section">Next steps</div>'+
+    recsHTML+
+    '<div class="submit-confirm">✓ Your responses have been recorded under password <strong>'+studyId+'</strong>. Your care team will review them.</div>'+
+    '<div class="disclaimer"><strong>⚕ Clinical note</strong>AUBrey is a research assessment tool built on the PALM-COEIN framework. It does not replace clinical evaluation. All outputs should be reviewed by a qualified provider. If you have an emergency, call 911 or go to the nearest emergency room.</div>'+
+    '<div style="margin-top:14px;padding-bottom:4px;"><button class="btn-outline" onclick="startOver()">Start a new assessment</button></div>';
+
+  goTo('results');
+}
+
+function startOver() {
+  studyId=''; visitContext=''; pregnancyContinued=false;
+  document.querySelectorAll('.opt-card').forEach(function(c){c.classList.remove('sel');});
+  padSelectedLevel=-1; padSubLevel=0;
+  document.querySelectorAll('.pad-option').forEach(function(o){o.classList.remove('sel');});
+  var ov=document.getElementById('padOverflow'); if(ov) ov.classList.remove('sel');
+  updatePadScoreDisplay();
+  document.getElementById('studyIdInput').value='';
+  goTo(0);
+}
+
+async function viewLastResults() {
+  if(!lastResultsData){ goTo('return'); return; }
+  var s=lastResultsData;
+  var sevLabels={low:'Low urgency',mod:'Evaluate soon',urg:'Urgent'};
+  var sc=s.severity_class||s.severity||'low';
+  var pc=s.palmCoein||{structural:[],nonstructural:[],flagged:[]};
+  var allBadges=(s.palm_structural||pc.structural||[]).concat(s.palm_nonstructural||pc.nonstructural||[]).concat(s.palm_iatrogenic||[]).concat(s.palm_flagged||pc.flagged||[]);
+  var badgesHTML=allBadges.map(function(b){return '<span class="badge b-non">'+b+'</span>';}).join('')||'<span class="badge b-non">N – Not yet classified</span>';
+  var recsHTML=(s.recommendations||[]).map(function(r){return '<div class="rec-item"><div class="rec-icon">📋</div><div class="rec-text">'+r+'</div></div>';}).join('');
+  document.getElementById('lastResultsBody').innerHTML=
+    '<div style="padding:4px 0 12px;"><div class="study-id-badge">'+s.study_id+'<strong style="margin-left:8px;color:var(--g-sage);">Previous Results</strong><span style="margin-left:auto;font-size:.7rem;color:rgba(255,255,255,.4);">'+new Date(s.timestamp).toLocaleDateString()+'</span></div></div>'+
+    '<div class="sev-card sev-'+sc+'"><div class="sev-icon">'+(sc==='urg'?'🚨':sc==='mod'?'⚠️':'✅')+'</div><div><div class="sev-title">'+sevLabels[sc]+'</div><div class="sev-desc">From your last assessment on '+new Date(s.timestamp).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'.</div></div></div>'+
+    '<div class="res-section">PALM-COEIN categories</div><div class="badge-row" style="margin-bottom:14px;">'+badgesHTML+'</div>'+
+    '<div class="res-section">Previous recommendations</div>'+recsHTML+
+    '<div style="margin-top:14px;"><div class="disclaimer"><strong>⚕ Note</strong>These are results from a previous session. Complete a new assessment for an updated evaluation.</div></div>';
+  goTo('lastresults');
+}
+
+// ══════════════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════════════
+function saveSubmission(data) {
+  try {
+    var key='sub_'+data.study_id+'_'+Date.now();
+    window.storage.set(key,JSON.stringify(data),false).catch(function(){});
+  } catch(e){}
+}
+async function loadSubmissions() {
+  try {
+    var res=await window.storage.list('sub_');
+    if(!res||!res.keys||!res.keys.length) return [];
+    var subs=[];
+    for(var k of res.keys){ try{ var r=await window.storage.get(k); if(r&&r.value) subs.push(JSON.parse(r.value)); }catch(e){} }
+    subs.sort(function(a,b){return new Date(b.timestamp)-new Date(a.timestamp);});
+    return subs;
+  } catch(e){return[];}
+}
+function logSession(sid,type){
+  try { var k='session_'+sid+'_'+Date.now(); window.storage.set(k,JSON.stringify({studyId:sid,timestamp:new Date().toISOString(),type}),false).catch(function(){}); } catch(e){}
+}
+async function getSessionsForId(sid){
+  try {
+    var res=await window.storage.list('session_'+sid+'_');
+    if(!res||!res.keys||!res.keys.length) return [];
+    var sess=[];
+    for(var k of res.keys){ try{ var r=await window.storage.get(k); if(r&&r.value) sess.push(JSON.parse(r.value)); }catch(e){} }
+    sess.sort(function(a,b){return new Date(a.timestamp)-new Date(b.timestamp);});
+    return sess;
+  } catch(e){return[];}
+}
+async function getLastSubmission(sid){
+  try {
+    var res=await window.storage.list('sub_'+sid+'_');
+    if(!res||!res.keys||!res.keys.length) return null;
+    var latest=null,lt=0;
+    for(var k of res.keys){ try{ var r=await window.storage.get(k); if(r&&r.value){var d=JSON.parse(r.value);var t=new Date(d.timestamp).getTime();if(t>lt){lt=t;latest=d;}} }catch(e){} }
+    return latest;
+  } catch(e){return null;}
+}
+
+// ══════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════
+function showToast(msg){
+  var t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.style.opacity='0';setTimeout(function(){t.remove();},500);},3000);
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN DASHBOARD
+// ══════════════════════════════════════════════════════
+function showAdmin(){document.getElementById('patientApp').classList.add('hidden');document.getElementById('adminApp').classList.remove('hidden');if(adminLoggedIn)renderDashboard();}
+function showPatient(){document.getElementById('adminApp').classList.add('hidden');document.getElementById('patientApp').classList.remove('hidden');}
+function adminLogin(){
+  var u=document.getElementById('adminUser').value,p=document.getElementById('adminPass').value;
+  if(u===ADMIN_USER&&p===ADMIN_PASS){adminLoggedIn=true;document.getElementById('adminLogin').classList.add('hidden');document.getElementById('adminDash').classList.remove('hidden');renderDashboard();}
+  else document.getElementById('loginErr').textContent='Incorrect credentials.';
+}
+function adminLogout(){adminLoggedIn=false;document.getElementById('adminDash').classList.add('hidden');document.getElementById('adminLogin').classList.remove('hidden');document.getElementById('adminUser').value='';document.getElementById('adminPass').value='';}
+
+async function renderDashboard(){allSubmissions=await loadSubmissions();renderStats();renderTable();}
+
+function renderStats(){
+  var total=allSubmissions.length;
+  var urg=allSubmissions.filter(function(s){return (s.severity_class||s.severity)==='urg';}).length;
+  var mod=allSubmissions.filter(function(s){return (s.severity_class||s.severity)==='mod';}).length;
+  var sessions=allSubmissions.reduce(function(sum,s){return sum+(s.session_count_at_submission||1);},0);
+  document.getElementById('statsRow').innerHTML=
+    '<div class="stat-card"><div class="stat-num">'+total+'</div><div class="stat-label">Total submissions</div></div>'+
+    '<div class="stat-card"><div class="stat-num warn">'+mod+'</div><div class="stat-label">Evaluate soon</div></div>'+
+    '<div class="stat-card"><div class="stat-num urg">'+urg+'</div><div class="stat-label">Urgent</div></div>'+
+    '<div class="stat-card"><div class="stat-num">'+sessions+'</div><div class="stat-label">Total app sessions</div></div>';
+}
+
+function renderTable(){
+  var search=document.getElementById('searchInput').value.toLowerCase();
+  var sevF=document.getElementById('filterSev').value;
+  var ctxF=document.getElementById('filterCtx').value;
+  var sevLabels={low:'Low urgency',mod:'Evaluate soon',urg:'Urgent'};
+  var filtered=allSubmissions.filter(function(s){
+    var sc=s.severity_class||s.severity||'low';
+    return (!search||s.study_id.toLowerCase().indexOf(search)>-1)&&
+      (!sevF||sc===sevF)&&(!ctxF||s.visit_context===ctxF);
+  });
+  if(!filtered.length){
+    document.getElementById('tableBody').innerHTML='<div class="empty-state"><div style="font-size:2rem;">📋</div><p>'+(allSubmissions.length===0?'No submissions yet.':'No matches found.')+'</p></div>';
+    return;
+  }
+  var bleedMap={HMB:'Heavy',IMB:'Intermenstrual',PCB:'Post-coital',PMB:'Postmenopausal',IRR:'Irregular',prolonged:'Prolonged'};
+  document.getElementById('tableBody').innerHTML=filtered.map(function(s){
+    var dt=new Date(s.timestamp);
+    var sc=s.severity_class||s.severity||'low';
+    var bleeds=['HMB','IMB','PCB','PMB','IRR','prolonged'].filter(function(b){return s['bleed_'+b];}).map(function(b){return bleedMap[b];}).join(', ')||'—';
+    return '<div class="t-row" onclick="showDetail(\''+s.study_id+'\',\''+s.timestamp+'\')">'+
+      '<div class="td td-id">'+s.study_id+'</div>'+
+      '<div class="td">'+dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'2-digit'})+'<br><span style="font-size:.7rem;color:var(--muted);">'+dt.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+      '<div class="td"><span class="sev-badge sb-'+sc+'">'+(sevLabels[sc]||sc)+'</span></div>'+
+      '<div class="td" style="font-size:.76rem;">'+(CTX_LABELS[s.visit_context]||'—')+'</div>'+
+      '<div class="td" style="font-weight:600;color:var(--g-mid);">'+(s.session_count_at_submission||'—')+'</div>'+
+      '<div class="td" style="font-size:.76rem;color:var(--muted);">'+bleeds+'</div>'+
+      '<div class="td"><button class="btn-view">View</button></div>'+
+      '</div>';
+  }).join('');
+}
+
+function showDetail(sid,ts){
+  var s=allSubmissions.find(function(x){return x.study_id===sid&&x.timestamp===ts;});
+  if(!s) return;
+  var sevLabels={low:'Low urgency',mod:'Evaluate soon',urg:'Urgent'};
+  var sc=s.severity_class||s.severity||'low';
+  var allBadges=(s.palm_structural||[]).concat(s.palm_nonstructural||[]).concat(s.palm_iatrogenic||[]).concat(s.palm_flagged||[]);
+
+  // Build flattened data tag view
+  var dataTags=[
+    {k:'study_id',v:s.study_id},{k:'timestamp',v:new Date(s.timestamp).toLocaleString()},
+    {k:'visit_context',v:s.visit_context},{k:'device_type',v:s.device_type},
+    {k:'auth_method',v:s.auth_method},{k:'age_group',v:s.age_group},
+    {k:'period_status',v:s.period_status},{k:'menopause_status',v:s.menopause_status},
+    {k:'duration',v:s.duration},{k:'pad_score',v:s.pad_score},
+    {k:'soaking_rate',v:s.soaking_rate},{k:'clots',v:s.clots},
+    {k:'anticoagulant',v:String(s.anticoagulant)},
+    {k:'triage_tier',v:s.triage_tier},{k:'severity_score',v:s.severity_score},
+    {k:'rf_hemorrhage',v:String(s.red_flag_hemorrhage)},
+    {k:'rf_infection',v:String(s.red_flag_infection)},
+    {k:'session_count',v:s.session_count_at_submission},
+  ];
+
+  document.getElementById('modalContent').innerHTML=
+    '<h2>'+s.study_id+'</h2>'+
+    '<div class="modal-meta">'+new Date(s.timestamp).toLocaleString()+' · '+CTX_LABELS[s.visit_context]+'</div>'+
+    '<div style="margin-bottom:14px;"><span class="sev-badge sb-'+sc+'" style="font-size:.85rem;padding:5px 14px;">'+(sevLabels[sc])+'</span></div>'+
+    '<div class="detail-section"><div class="detail-label">PALM-COEIN flags</div>'+
+    '<div class="detail-chips">'+(allBadges.length?allBadges.map(function(b){return '<span class="chip">'+b+'</span>';}).join(''):'<span style="font-size:.82rem;color:var(--muted);">None flagged</span>')+'</div></div>'+
+    '<div class="detail-section"><div class="detail-label">Contraception / medications</div>'+
+    '<div class="detail-chips">'+((s.contraception||[]).concat(s.anticoagulant_types||[])).map(function(c){return '<span class="chip">'+c+'</span>';}).join('')+'</div></div>'+
+    '<div class="detail-section"><div class="detail-label">All data tags</div>'+
+    '<div class="data-grid">'+dataTags.map(function(d){return '<div class="data-item"><div class="data-key">'+d.k+'</div><div class="data-val">'+(d.v||'—')+'</div></div>';}).join('')+'</div></div>';
+
+  document.getElementById('detailModal').classList.remove('hidden');
+}
+
+function closeModal(){document.getElementById('detailModal').classList.add('hidden');}
+
+// ══════════════════════════════════════════════════════
+// CSV EXPORT — all data tags
+// ══════════════════════════════════════════════════════
+function exportCSV(){
+  if(!allSubmissions.length){alert('No submissions yet.');return;}
+  var headers=['study_id','timestamp','session_number','session_count_at_submission','auth_method','device_type',
+    'visit_context','pregnancy_warned','pregnancy_continued',
+    'ctx_ab_type','ctx_ab_days','ctx_pp_delivery','ctx_pp_weeks','ctx_pp_breastfeeding','ctx_proc_type','ctx_proc_days','ctx_med_type','ctx_med_weeks',
+    'contraception','anticoagulant','anticoagulant_types',
+    'period_status','menopause_status','age_group',
+    'bleed_HMB','bleed_IMB','bleed_PCB','bleed_PMB','bleed_IRR','bleed_prolonged',
+    'duration','pad_score','soaking_rate','clots',
+    'sx_fatigue','sx_pelvic_pain','sx_dyspareunia','sx_discharge','sx_bloating','sx_dizziness','sx_fever','sx_foul_odor',
+    'rf_bleeding_disorder','rf_thyroid','rf_pcos','rf_cancer_hx',
+    'severity_score','severity_class','triage_tier',
+    'palm_structural','palm_nonstructural','palm_iatrogenic','palm_flagged',
+    'red_flag_PMB','red_flag_PCB','red_flag_hemorrhage','red_flag_infection'];
+
+  var q=function(v){return '"'+(v===null||v===undefined?'':String(v).replace(/"/g,'""'))+'"';};
+  var rows=allSubmissions.map(function(s){
+    var cd=s.ctx_detail||{};
+    return [
+      s.study_id, s.timestamp, s.session_number, s.session_count_at_submission,
+      s.auth_method, s.device_type,
+      s.visit_context, s.pregnancy_warned, s.pregnancy_continued,
+      cd.ab_type, cd.ab_days, cd.pp_delivery, cd.pp_weeks, cd.pp_bf,
+      cd.proc_type, cd.proc_days, cd.med_type, cd.med_weeks,
+      (s.contraception||[]).join(';'), s.anticoagulant, (s.anticoagulant_types||[]).join(';'),
+      s.period_status, s.menopause_status, s.age_group,
+      s.bleed_HMB, s.bleed_IMB, s.bleed_PCB, s.bleed_PMB, s.bleed_IRR, s.bleed_prolonged,
+      s.duration, s.pad_score, s.soaking_rate, s.clots,
+      s.sx_fatigue, s.sx_pelvic_pain, s.sx_dyspareunia, s.sx_discharge, s.sx_bloating, s.sx_dizziness, s.sx_fever, s.sx_foul_odor,
+      s.rf_bleeding_disorder, s.rf_thyroid, s.rf_pcos, s.rf_cancer_hx,
+      s.severity_score, s.severity_class, s.triage_tier,
+      (s.palm_structural||[]).join(';'), (s.palm_nonstructural||[]).join(';'),
+      (s.palm_iatrogenic||[]).join(';'), (s.palm_flagged||[]).join(';'),
+      s.red_flag_PMB, s.red_flag_PCB, s.red_flag_hemorrhage, s.red_flag_infection
+    ].map(q).join(',');
+  });
+  var csv=[headers.join(',')].concat(rows).join('\n');
+  var blob=new Blob([csv],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');a.href=url;a.download='aubrey_data_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════
+// DEV UTILITIES
+// ══════════════════════════════════════════════════════
+async function clearAllData() {
+  try {
+    // Clear submissions
+    var subs = await window.storage.list('sub_');
+    if (subs && subs.keys) {
+      for (var k of subs.keys) {
+        try { await window.storage.delete(k); } catch(e) {}
+      }
+    }
+    // Clear sessions
+    var sess = await window.storage.list('session_');
+    if (sess && sess.keys) {
+      for (var k of sess.keys) {
+        try { await window.storage.delete(k); } catch(e) {}
+      }
+    }
+    // Clear biometric link
+    try { localStorage.removeItem('aubrey_bio_v1'); } catch(e) {}
+    showToast('All data cleared ✓');
+    if (adminLoggedIn) renderDashboard();
+    console.log('AUBrey: all data cleared');
+    return true;
+  } catch(e) {
+    console.error('Clear failed:', e);
+    return false;
+  }
+}
+// Call clearAllData() from browser console to wipe test data
+function confirmClear() {
+  if (confirm('Clear ALL submissions and sessions? This cannot be undone.')) {
+    clearAllData();
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+async function init(){
+  // Show iOS install hint on iPhone Safari if not in standalone mode
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isStandalone = window.navigator.standalone === true;
+  var isDismissed = localStorage.getItem('aubrey_ios_hint_dismissed');
+  if (isIOS && !isStandalone && !isDismissed) {
+    var hint = document.getElementById('iosInstallHint');
+    if (hint) {
+      hint.classList.remove('hidden');
+      hint.querySelector('button').addEventListener('click', function() {
+        localStorage.setItem('aubrey_ios_hint_dismissed', '1');
+      });
+    }
+  }
+  goTo(0);
+  var link=loadBioLink();
+  if(link&&await checkBio()){
+    document.getElementById('bioSection').classList.remove('hidden');
+    document.getElementById('bioTitle').textContent='Welcome back';
+    document.getElementById('bioSub').textContent='Use Face ID or biometrics to sign in instantly.';
+    document.getElementById('codeIcon').textContent='⌨️';
+    document.getElementById('codeTitle').textContent='Or enter your password';
+    document.getElementById('codeSub').textContent='Enter your password manually, or if you\'re on a different device.';
+  }
+}
+init();
+
+// ══════════════════════════════════════════════════════
+// SERVICE WORKER (PWA offline support)
+// ══════════════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  var swCode = [
+    "const CACHE = 'aubrey-v1';",
+    "const ASSETS = [self.location.pathname];",
+    "self.addEventListener('install', e => {",
+    "  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));",
+    "  self.skipWaiting();",
+    "});",
+    "self.addEventListener('activate', e => {",
+    "  e.waitUntil(caches.keys().then(keys =>",
+    "    Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))",
+    "  ));",
+    "  self.clients.claim();",
+    "});",
+    "self.addEventListener('fetch', e => {",
+    "  e.respondWith(",
+    "    caches.match(e.request).then(r => r || fetch(e.request).then(res => {",
+    "      if (!res || res.status !== 200 || res.type !== 'basic') return res;",
+    "      var clone = res.clone();",
+    "      caches.open(CACHE).then(c => c.put(e.request, clone));",
+    "      return res;",
+    "    })).catch(() => caches.match(e.request))",
+    "  );",
+    "});"
+  ].join('\n');
+
+  var swBlob = new Blob([swCode], { type: 'text/javascript' });
+  var swUrl  = URL.createObjectURL(swBlob);
+
+  navigator.serviceWorker.register(swUrl).then(function(reg) {
+    console.log('AUBrey SW registered:', reg.scope);
+  }).catch(function(err) {
+    console.log('SW registration failed (normal in dev):', err.message);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// APP ICON (generate via canvas for Apple touch icon)
+// ══════════════════════════════════════════════════════
+(function generateIcon() {
+  try {
+    var canvas = document.createElement('canvas');
+    canvas.width = 180; canvas.height = 180;
+    var ctx = canvas.getContext('2d');
+
+    // Background — deep burgundy with rounded rect
+    ctx.fillStyle = '#3D1020';
+    var r = 36;
+    ctx.beginPath();
+    ctx.moveTo(r, 0); ctx.lineTo(180-r, 0);
+    ctx.quadraticCurveTo(180, 0, 180, r);
+    ctx.lineTo(180, 180-r);
+    ctx.quadraticCurveTo(180, 180, 180-r, 180);
+    ctx.lineTo(r, 180);
+    ctx.quadraticCurveTo(0, 180, 0, 180-r);
+    ctx.lineTo(0, r);
+    ctx.quadraticCurveTo(0, 0, r, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Drop mark — berry red
+    ctx.fillStyle = '#8B1A34';
+    ctx.beginPath();
+    ctx.ellipse(90, 94, 34, 44, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Drop highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.beginPath();
+    ctx.ellipse(90, 74, 14, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // "A" lettermark
+    ctx.fillStyle = '#D4889A';
+    ctx.font = 'bold 36px Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('A', 90, 94);
+
+    // "Know Your Flow" micro text
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.font = '11px Arial, sans-serif';
+    ctx.letterSpacing = '1px';
+    ctx.fillText('KNOW YOUR FLOW', 90, 152);
+
+    var dataUrl = canvas.toDataURL('image/png');
+
+    // Set as apple touch icon
+    var link = document.getElementById('appleTouchIcon');
+    if (link) { link.href = dataUrl; link.sizes = '180x180'; }
+
+    // Also set favicon
+    var favicon = document.querySelector("link[rel='icon']");
+    if (!favicon) {
+      favicon = document.createElement('link');
+      favicon.rel = 'icon'; favicon.type = 'image/png';
+      document.head.appendChild(favicon);
+    }
+    favicon.href = dataUrl;
+
+  } catch(e) { console.log('Icon generation skipped:', e.message); }
+})();
+
+// ══════════════════════════════════════════════════════
+// INSTALL PROMPT (Android Chrome)
+// ══════════════════════════════════════════════════════
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 30s if not dismissed
+  setTimeout(function() {
+    if (deferredPrompt) showInstallBanner();
+  }, 30000);
+});
+
+function showInstallBanner() {
+  if (document.getElementById('installBanner')) return;
+  var banner = document.createElement('div');
+  banner.id = 'installBanner';
+  banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#3D1020;color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;z-index:999;font-family:"DM Sans",sans-serif;font-size:.85rem;box-shadow:0 -4px 20px rgba(0,0,0,.3);';
+  banner.innerHTML = '<div><div style="font-weight:600;margin-bottom:2px;">Add AUBrey to your home screen</div><div style="font-size:.75rem;opacity:.65;">Install for quick access between visits</div></div><div style="display:flex;gap:8px;"><button onclick="installApp()" style="background:#8B1A34;color:#fff;border:none;border-radius:20px;padding:8px 16px;font-family:inherit;font-size:.82rem;cursor:pointer;font-weight:500;">Install</button><button onclick="dismissBanner()" style="background:none;border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:20px;padding:8px 12px;font-family:inherit;font-size:.82rem;cursor:pointer;">Later</button></div>';
+  document.body.appendChild(banner);
+}
+
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(function(r) {
+    if (r.outcome === 'accepted') showToast('AUBrey installed! Find it on your home screen 🎉');
+    deferredPrompt = null;
+    dismissBanner();
+  });
+}
+
+function dismissBanner() {
+  var b = document.getElementById('installBanner');
+  if (b) b.remove();
+}
+
+window.addEventListener('appinstalled', function() {
+  showToast('AUBrey installed successfully 🎉');
+  deferredPrompt = null;
+});
+</script>
+</body>
+</html>
